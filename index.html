@@ -1,0 +1,2143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cambria Duel Arena Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+<script src="config.js"></script>
+<script src="web3-utils.js"></script>
+<style>
+:root {
+/* Red theme (default) */
+--primary: #c62828;
+--primary-light: #ff5f52;
+--primary-dark: #8e0000;
+--secondary: #ff5252;
+--dark: #1a0f0f;
+--dark-light: #2a1717;
+--text: #f5f5f5;
+--text-secondary: #b3b3b3;
+--success: #00cc66;
+--danger: #ff4d4d;
+}
+
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+
+body {
+font-family: 'Roboto', sans-serif;
+background-color: var(--dark);
+color: var(--text);
+line-height: 1.6;
+}
+
+.container {
+max-width: 1200px;
+margin: 0 auto;
+padding: 0 20px;
+}
+
+header {
+background: linear-gradient(to right, var(--primary-dark), var(--primary));
+padding: 20px 0;
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+position: sticky;
+top: 0;
+z-index: 100;
+}
+
+.header-content {
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+.logo {
+font-family: 'Orbitron', sans-serif;
+font-size: 28px;
+font-weight: 700;
+display: flex;
+align-items: center;
+}
+
+.logo-icon {
+margin-right: 10px;
+font-size: 32px;
+}
+
+nav ul {
+display: flex;
+list-style: none;
+}
+
+nav ul li {
+margin-left: 25px;
+}
+
+nav ul li a {
+color: var(--text);
+text-decoration: none;
+font-weight: 500;
+transition: color 0.3s;
+padding: 5px 10px;
+border-radius: 4px;
+}
+
+nav ul li a:hover {
+color: var(--secondary);
+}
+
+
+.hero {
+text-align: center;
+padding: 60px 0;
+background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%234a2a75"/><path d="M0 0L100 100" stroke="%236a3d9a" stroke-width="2"/><path d="M100 0L0 100" stroke="%236a3d9a" stroke-width="2"/></svg>');
+background-size: cover;
+margin-bottom: 40px;
+}
+
+.hero h1 {
+font-family: 'Orbitron', sans-serif;
+font-size: 42px;
+margin-bottom: 20px;
+color: var(--secondary);
+}
+
+.hero p {
+font-size: 18px;
+max-width: 700px;
+margin: 0 auto 30px;
+color: var(--text-secondary);
+}
+
+.search-container {
+max-width: 600px;
+margin: 0 auto;
+position: relative;
+}
+
+.search-box {
+display: flex;
+width: 100%;
+}
+
+.search-input {
+flex: 1;
+padding: 15px 20px;
+border: none;
+border-radius: 4px 0 0 4px;
+font-size: 16px;
+background-color: var(--dark-light);
+color: var(--text);
+}
+
+.search-btn {
+padding: 15px 25px;
+background-color: var(--primary);
+color: white;
+border: none;
+border-radius: 0 4px 4px 0;
+cursor: pointer;
+font-weight: 500;
+transition: background-color 0.3s;
+}
+
+.search-btn:hover {
+background-color: var(--primary-light);
+}
+
+.search-history {
+position: absolute;
+top: 100%;
+left: 0;
+right: 0;
+background-color: var(--dark-light);
+border-radius: 0 0 4px 4px;
+box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+z-index: 10;
+max-height: 0;
+overflow: hidden;
+transition: max-height 0.3s ease-in-out;
+}
+
+.search-input:focus + .search-btn + .search-history,
+.search-history:hover {
+max-height: 300px;
+}
+
+.history-title {
+padding: 10px 15px;
+font-size: 14px;
+color: var(--text-secondary);
+border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.history-items {
+max-height: 250px;
+overflow-y: auto;
+}
+
+.history-item {
+padding: 10px 15px;
+cursor: pointer;
+transition: background-color 0.2s;
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+.history-item:hover {
+background-color: rgba(106, 61, 154, 0.2);
+}
+
+.history-address {
+font-family: 'Orbitron', sans-serif;
+font-size: 14px;
+color: var(--secondary);
+}
+
+.history-time {
+font-size: 12px;
+color: var(--text-secondary);
+}
+
+.history-remove {
+color: var(--danger);
+background: none;
+border: none;
+cursor: pointer;
+font-size: 16px;
+padding: 0 5px;
+opacity: 0;
+transition: opacity 0.2s;
+}
+
+.history-item:hover .history-remove {
+opacity: 1;
+}
+
+.section-title {
+font-family: 'Orbitron', sans-serif;
+font-size: 28px;
+margin-bottom: 30px;
+color: var(--secondary);
+text-align: center;
+}
+
+.wallet-stats {
+background-color: var(--dark-light);
+border-radius: 8px;
+padding: 30px;
+margin-bottom: 40px;
+box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.wallet-header {
+display: flex;
+flex-wrap: wrap;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 30px;
+gap: 15px;
+}
+
+.wallet-address {
+font-family: 'Orbitron', sans-serif;
+font-size: 16px;
+color: var(--secondary);
+word-break: break-all;
+max-width: 500px;
+}
+
+.wallet-actions {
+display: flex;
+flex-wrap: wrap;
+align-items: center;
+gap: 10px;
+}
+
+.stats-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+gap: 20px;
+margin-bottom: 30px;
+}
+
+.stat-card {
+background-color: rgba(106, 61, 154, 0.2);
+border-radius: 8px;
+padding: 20px;
+text-align: center;
+transition: transform 0.3s;
+}
+
+.stat-card:hover {
+transform: translateY(-5px);
+}
+
+.stat-value {
+font-size: 32px;
+font-weight: 700;
+margin: 10px 0;
+font-family: 'Orbitron', sans-serif;
+}
+
+.profit {
+color: var(--success);
+}
+
+.loss {
+color: var(--danger);
+}
+
+.charts-grid {
+display: grid;
+grid-template-columns: 1fr;
+gap: 20px;
+margin-top: 30px;
+}
+
+@media (min-width: 768px) {
+    .charts-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.chart-container {
+background-color: rgba(0, 0, 0, 0.2);
+border-radius: 8px;
+padding: 20px;
+}
+
+.chart-title {
+font-family: 'Orbitron', sans-serif;
+font-size: 16px;
+color: var(--secondary);
+margin-bottom: 15px;
+text-align: center;
+}
+
+.duels-section {
+margin-bottom: 40px;
+}
+
+.duels-table {
+width: 100%;
+border-collapse: collapse;
+background-color: var(--dark-light);
+border-radius: 8px;
+overflow: hidden;
+}
+
+.duels-table th, .duels-table td {
+padding: 15px;
+text-align: left;
+border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.duels-table th {
+background-color: var(--primary);
+font-weight: 500;
+}
+
+.duels-table tr:hover {
+background-color: rgba(106, 61, 154, 0.1);
+}
+
+.winner {
+color: var(--success);
+font-weight: 500;
+}
+
+.loser {
+color: var(--danger);
+font-weight: 500;
+}
+
+.vs-badge {
+display: inline-block;
+padding: 5px 10px;
+background-color: var(--primary);
+border-radius: 20px;
+font-size: 12px;
+margin: 0 10px;
+}
+
+.fee-info {
+background-color: rgba(0, 180, 216, 0.1);
+border: 1px solid var(--secondary);
+border-radius: 8px;
+padding: 15px;
+margin: 20px 0;
+font-size: 14px;
+color: var(--text-secondary);
+}
+
+.fee-info strong {
+color: var(--secondary);
+}
+
+footer {
+background-color: var(--dark-light);
+padding: 30px 0;
+text-align: center;
+margin-top: 60px;
+}
+
+.footer-content {
+display: flex;
+flex-direction: column;
+align-items: center;
+}
+
+.social-links {
+display: flex;
+margin: 20px 0;
+}
+
+.social-links a {
+display: flex;
+align-items: center;
+justify-content: center;
+width: 40px;
+height: 40px;
+border-radius: 50%;
+background-color: var(--primary);
+color: white;
+margin: 0 10px;
+text-decoration: none;
+transition: transform 0.3s;
+}
+
+.social-links a:hover {
+    transform: translateY(-3px);
+}
+
+/* Connection Status Styles */
+.connection-status {
+    display: flex;
+    align-items: center;
+    margin-left: 15px;
+    padding: 8px 12px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    transition: background-color 0.3s;
+}
+
+.status-indicator.online {
+    background-color: var(--success);
+    box-shadow: 0 0 6px var(--success);
+}
+
+.status-indicator.offline {
+    background-color: var(--danger);
+}
+
+.status-text {
+    font-weight: 500;
+}
+
+/* Loading States */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid var(--secondary);
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Error States */
+.error-state {
+    color: var(--danger);
+    text-align: center;
+    padding: 20px;
+    background-color: rgba(255, 77, 77, 0.1);
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+/* Real-time Updates */
+.real-time-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: var(--success);
+    border-radius: 50%;
+    margin-left: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Live Feed Styles */
+.live-feed-section {
+    background-color: var(--dark-light);
+    border-radius: 8px;
+    padding: 30px;
+    margin-bottom: 40px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.live-feed-container {
+    width: 100%;
+}
+
+.live-feed-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.feed-stats {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.feed-stat {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.feed-stat span {
+    color: var(--secondary);
+    font-weight: 500;
+}
+
+.live-feed-table-container {
+    overflow-x: auto;
+    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.live-feed-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+.live-feed-table th,
+.live-feed-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.live-feed-table th {
+    background-color: var(--primary);
+    font-weight: 500;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.live-feed-table tr:hover {
+    background-color: rgba(106, 61, 154, 0.1);
+}
+
+.wallet-link {
+    color: var(--secondary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.wallet-link:hover {
+    color: var(--secondary);
+    text-decoration: underline;
+}
+
+.tx-link {
+    color: var(--secondary);
+    text-decoration: none;
+    font-size: 12px;
+    padding: 4px 8px;
+    background-color: rgba(0, 180, 216, 0.2);
+    border-radius: 4px;
+    transition: background-color 0.3s;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.tx-link:hover {
+    background-color: rgba(0, 180, 216, 0.3);
+    text-decoration: none;
+}
+
+.status-pending {
+    color: #ff8c00;
+    font-weight: 500;
+}
+
+.status-completed {
+    color: var(--success);
+    font-weight: 500;
+}
+
+.result-winner {
+    color: var(--success);
+    font-weight: 500;
+}
+
+.result-loser {
+    color: var(--danger);
+    font-weight: 500;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background-color: var(--dark-light);
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    background: linear-gradient(to right, var(--primary-dark), var(--primary));
+    padding: 20px 30px;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 24px;
+    color: var(--text);
+    margin: 0;
+}
+
+.modal-close {
+    color: var(--text);
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.modal-close:hover {
+    color: var(--secondary);
+}
+
+.modal-body {
+    padding: 30px;
+}
+
+.duel-info {
+    background-color: rgba(106, 61, 154, 0.1);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+    border: 1px solid rgba(106, 61, 154, 0.3);
+}
+
+.duel-players {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.player-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.player-label {
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.duel-wager {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.wager-label {
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.wager-amount {
+    color: var(--secondary);
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.transactions-section h3 {
+    color: var(--secondary);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+    margin-bottom: 20px;
+}
+
+.transactions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.transaction-item {
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: border-color 0.3s;
+}
+
+.transaction-item:hover {
+    border-color: var(--secondary);
+}
+
+.transaction-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.transaction-type {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.transaction-type.join-battle {
+    color: #ff8c00;
+}
+
+.transaction-type.duel-completed {
+    color: var(--success);
+}
+
+.transaction-type.funds-released {
+    color: var(--secondary);
+}
+
+.transaction-hash {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.transaction-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.transaction-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.transaction-detail-label {
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.transaction-detail-value {
+    color: var(--text);
+    font-weight: 500;
+}
+
+.transaction-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--secondary);
+    text-decoration: none;
+    font-size: 12px;
+    padding: 4px 8px;
+    background-color: rgba(0, 180, 216, 0.2);
+    border-radius: 4px;
+    transition: background-color 0.3s;
+    margin-top: 10px;
+}
+
+.transaction-link:hover {
+    background-color: rgba(0, 180, 216, 0.3);
+    text-decoration: none;
+}
+
+.loading-transactions {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 40px;
+    font-style: italic;
+}
+
+.no-transactions {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 40px;
+    font-style: italic;
+}
+
+/* Responsive Modal */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        margin: 10% auto;
+        max-height: 85vh;
+    }
+    
+    .modal-header {
+        padding: 15px 20px;
+    }
+    
+    .modal-title {
+        font-size: 20px;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+    
+    .duel-players {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .transaction-details {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+.header-content {
+flex-direction: column;
+}
+
+nav ul {
+margin-top: 20px;
+}
+
+.stats-grid {
+grid-template-columns: 1fr;
+}
+
+.wallet-header {
+flex-direction: column;
+text-align: center;
+}
+
+.wallet-actions {
+margin-top: 20px;
+}
+}
+</style>
+</head>
+<body>
+<header>
+<div class="container">
+<div class="header-content">
+<div class="logo">
+<span class="logo-icon">⚔️</span>
+<span>Cambria Duel Tracker</span>
+</div>
+<nav>
+<ul>
+<li><a href="index.html">Home</a></li>
+<li><a href="leaderboard.html">Leaderboard</a></li>
+<li><a href="statistics.html">Statistics</a></li>
+<li><a href="about.html">About</a></li>
+</ul>
+</nav>
+</div>
+</div>
+</header>
+
+<section class="hero">
+<div class="container">
+<h1>Track Cambria Duel Arena Data</h1>
+<p>Analyze wallet statistics, track profits and losses, and explore duel history on the Abstract L2 chain</p>
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" class="search-input" placeholder="Enter wallet address..." id="walletSearchInput">
+                <button class="search-btn" id="searchBtn">Search</button>
+            </div>
+            <div class="search-history" id="searchHistory">
+                <div class="history-title">Recent Searches</div>
+                <div class="history-items" id="historyItems">
+                    <!-- Search history items will be added here -->
+                </div>
+            </div>
+        </div>
+</div>
+</section>
+
+<main class="container">
+<div class="fee-info">
+<strong>Fee Structure:</strong> Winners take both wagers but pay a 5% fee on total winnings. Example: 0.01 ETH duel → winner claims 0.02 ETH but pays 0.001 ETH fee → net profit: 0.019 ETH
+</div>
+
+<section class="live-feed-section">
+    <h2 class="section-title">Live Duel Activity <span class="real-time-indicator"></span></h2>
+    <div class="live-feed-container">
+        <div class="live-feed-header">
+            <div class="feed-stats">
+                <span class="feed-stat">Total Duels: <span id="totalDuelsCount">-</span></span>
+                <span class="feed-stat">Pending: <span id="pendingDuelsCount">-</span></span>
+                <span class="feed-stat">Completed: <span id="completedDuelsCount">-</span></span>
+            </div>
+            <button class="search-btn" id="refreshFeedBtn">Refresh Feed</button>
+        </div>
+        <div class="live-feed-table-container">
+            <table class="live-feed-table" id="liveFeedTable">
+                <thead>
+                    <tr>
+                        <th>Duel ID</th>
+                        <th>Players</th>
+                        <th>Wager</th>
+                        <th>Status</th>
+                        <th>Result</th>
+                        <th>Transaction</th>
+                    </tr>
+                </thead>
+                <tbody id="liveFeedTableBody">
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-secondary);">Loading live duel activity...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<section class="wallet-stats" id="wallet-stats-section" style="display: none;">
+        <div class="wallet-header">
+            <div class="wallet-address" id="currentWalletAddress">Search for a wallet to view statistics</div>
+            <div class="wallet-actions">
+                <button class="search-btn" id="refreshDataBtn">Refresh Data</button>
+                <a href="#" id="walletAbscanLink" target="_blank" class="search-btn" style="text-decoration: none;">View on AbScan</a>
+                <div class="connection-status" id="connectionStatus">
+                    <span class="status-indicator online"></span>
+                    <span class="status-text">Live Data</span>
+                </div>
+            </div>
+        </div>
+
+<div class="stats-grid">
+<div class="stat-card">
+<div class="stat-label">Total Wager</div>
+<div class="stat-value">4.582 ETH</div>
+<div class="stat-desc">All-time wagered amount</div>
+</div>
+<div class="stat-card">
+<div class="stat-label">Total ETH Won</div>
+<div class="stat-value profit">8.200 ETH</div>
+<div class="stat-desc">Total ETH won from all duels</div>
+</div>
+<div class="stat-card">
+<div class="stat-label">Total Profit</div>
+<div class="stat-value profit">+0.412 ETH</div>
+<div class="stat-desc">Net profit from all duels (after 10% fees)</div>
+</div>
+<div class="stat-card">
+<div class="stat-label">Profit/Loss Index</div>
+<div class="stat-value profit">+9.0%</div>
+<div class="stat-desc">Win rate efficiency</div>
+</div>
+<div class="stat-card">
+<div class="stat-label">Total Duels</div>
+<div class="stat-value">142</div>
+<div class="stat-desc">All duels participated in</div>
+</div>
+<div class="stat-card">
+<div class="stat-label">Wins</div>
+<div class="stat-value profit">86</div>
+<div class="stat-desc">Duels won</div>
+</div>
+<div class="stat-card">
+<div class="stat-label">Losses</div>
+<div class="stat-value loss">56</div>
+<div class="stat-desc">Duels lost</div>
+</div>
+</div>
+
+<div class="charts-grid">
+    <div class="chart-container">
+        <h3 class="chart-title">Profit/Loss Trend</h3>
+        <canvas id="profitChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <h3 class="chart-title">Duel Wager Distribution</h3>
+        <canvas id="wagerDistributionChart"></canvas>
+    </div>
+</div>
+</section>
+
+<section class="duels-section" id="duels-section" style="display: none;">
+<h2 class="section-title">Duel History</h2>
+<table class="duels-table">
+                <thead>
+                    <tr>
+                        <th>Duel ID</th>
+                        <th>Players</th>
+                        <th>Wager</th>
+                        <th>Result</th>
+                        <th>Net Profit</th>
+                        <th>Transaction</th>
+                    </tr>
+                </thead>
+<tbody>
+<tr>
+<td>#7821</td>
+<td>
+<span class="winner">0x8a34c7a0...b2d1f</span>
+<span class="vs-badge">VS</span>
+<span class="loser">0xcf89d1e0...a43e2</span>
+</td>
+<td>0.050 ETH</td>
+<td class="profit">Win</td>
+<td class="profit">+0.090 ETH</td>
+<td>2023-10-15</td>
+</tr>
+<tr>
+<td>#7819</td>
+<td>
+<span class="loser">0x8a34c7a0...b2d1f</span>
+<span class="vs-badge">VS</span>
+<span class="winner">0xab45f1c2...d67b9</span>
+</td>
+<td>0.100 ETH</td>
+<td class="loss">Loss</td>
+<td class="loss">-0.100 ETH</td>
+<td>2023-10-14</td>
+</tr>
+<tr>
+<td>#7810</td>
+<td>
+<span class="winner">0x8a34c7a0...b2d1f</span>
+<span class="vs-badge">VS</span>
+<span class="loser">0x329a7b10...e89c4</span>
+</td>
+<td>0.075 ETH</td>
+<td class="profit">Win</td>
+<td class="profit">+0.135 ETH</td>
+<td>2023-10-13</td>
+</tr>
+<tr>
+<td>#7805</td>
+<td>
+<span class="winner">0x8a34c7a0...b2d1f</span>
+<span class="vs-badge">VS</span>
+<span class="loser">0xcf89d1e0...a43e2</span>
+</td>
+<td>0.120 ETH</td>
+<td class="profit">Win</td>
+<td class="profit">+0.216 ETH</td>
+<td>2023-10-12</td>
+</tr>
+<tr>
+<td>#7798</td>
+<td>
+<span class="loser">0x8a34c7a0...b2d1f</span>
+<span class="vs-badge">VS</span>
+<span class="winner">0xab45f1c2...d67b9</span>
+</td>
+<td>0.090 ETH</td>
+<td class="loss">Loss</td>
+<td class="loss">-0.090 ETH</td>
+<td>2023-10-11</td>
+</tr>
+</tbody>
+</table>
+</section>
+</main>
+
+<footer>
+<div class="container">
+<div class="footer-content">
+<div class="logo">
+<span class="logo-icon">⚔️</span>
+<span>Cambria Duel Tracker</span>
+</div>
+<p>Track and analyze Cambria Duel Arena data on the Abstract L2 chain</p>
+<div class="social-links">
+<a href="#"><span>𝕏</span></a>
+<a href="#"><span>𝐌</span></a>
+<a href="#"><span>𝐆</span></a>
+</div>
+<p>© 2023 Cambria Duel Tracker. Not affiliated with @playcambria.</p>
+</div>
+    </div>
+</footer>
+
+<!-- Duel Transactions Modal -->
+<div id="duelModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Duel #<span id="modalDuelId"></span> Transactions</h2>
+            <span class="modal-close">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="duel-info">
+                <div class="duel-players">
+                    <div class="player-info">
+                        <span class="player-label">Player 1:</span>
+                        <a href="#" id="modalPlayer1Link" class="wallet-link" target="_blank"></a>
+                    </div>
+                    <div class="player-info">
+                        <span class="player-label">Player 2:</span>
+                        <a href="#" id="modalPlayer2Link" class="wallet-link" target="_blank"></a>
+                    </div>
+                    <div class="duel-wager">
+                        <span class="wager-label">Wager:</span>
+                        <span id="modalWager" class="wager-amount"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="transactions-section">
+                <h3>Related Transactions</h3>
+                <div class="transactions-list" id="transactionsList">
+                    <div class="loading-transactions">Loading transactions...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Cambria Duel Arena Tracker - Smart Contract Integration
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the application
+    initializeApp();
+});
+
+async function initializeApp() {
+    // Initialize chart
+    initializeChart();
+    
+    // Set up event listeners
+    setupEventListeners();
+    
+    // Hide wallet-specific sections initially
+    document.getElementById('wallet-stats-section').style.display = 'none';
+    document.getElementById('duels-section').style.display = 'none';
+    
+    // Try to auto-connect if previously connected
+    await tryAutoConnect();
+    
+    // Set up real-time updates
+    setupRealTimeUpdates();
+    
+    // Load live feed data
+    await loadLiveFeed();
+}
+
+function initializeChart() {
+    // Initialize profit chart
+    const profitCtx = document.getElementById('profitChart').getContext('2d');
+    window.profitChart = new Chart(profitCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+            datasets: [{
+                label: 'Profit/Loss (ETH)',
+                data: [-0.120, 0.080, 0.150, -0.040, 0.200, 0.120, 0.180, 0.090, 0.220, 0.160],
+                borderColor: '#6a3d9a',
+                backgroundColor: 'rgba(106, 61, 154, 0.2)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Monthly Profit/Loss Trend (After 5% Fees)',
+                    color: '#f5f5f5'
+                },
+                legend: {
+                    labels: {
+                        color: '#f5f5f5'
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#f5f5f5'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#f5f5f5'
+                    }
+                }
+            }
+        }
+    });
+    
+    // Initialize wager distribution chart
+    const wagerCtx = document.getElementById('wagerDistributionChart').getContext('2d');
+    window.wagerDistributionChart = new Chart(wagerCtx, {
+        type: 'bar',
+        data: {
+            labels: ['0.001-0.01', '0.01-0.05', '0.05-0.1', '0.1-0.5', '0.5+'],
+            datasets: [{
+                label: 'Number of Duels',
+                data: [0, 0, 0, 0, 0],
+                backgroundColor: [
+                    'rgba(106, 61, 154, 0.6)',
+                    'rgba(106, 61, 154, 0.7)',
+                    'rgba(106, 61, 154, 0.8)',
+                    'rgba(106, 61, 154, 0.9)',
+                    'rgba(106, 61, 154, 1.0)'
+                ],
+                borderColor: [
+                    'rgba(106, 61, 154, 1)',
+                    'rgba(106, 61, 154, 1)',
+                    'rgba(106, 61, 154, 1)',
+                    'rgba(106, 61, 154, 1)',
+                    'rgba(106, 61, 154, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#f5f5f5'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#f5f5f5'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function setupEventListeners() {
+    // Search functionality
+    const searchBtn = document.getElementById('searchBtn');
+    const searchInput = document.getElementById('walletSearchInput');
+    const refreshDataBtn = document.getElementById('refreshDataBtn');
+    const refreshFeedBtn = document.getElementById('refreshFeedBtn');
+    
+    searchBtn.addEventListener('click', handleWalletSearch);
+    refreshDataBtn.addEventListener('click', handleRefreshData);
+    refreshFeedBtn.addEventListener('click', handleRefreshFeed);
+    
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            handleWalletSearch();
+        }
+    });
+    
+    // Load search history
+    loadSearchHistory();
+    
+    // Search input focus event for showing history
+    searchInput.addEventListener('focus', function() {
+        const searchHistory = document.getElementById('searchHistory');
+        if (searchHistory) {
+            searchHistory.style.display = 'block';
+        }
+    });
+    
+    
+    // Modal functionality
+    setupModalEventListeners();
+    
+    // Listen for Web3 events
+    window.cambriaWeb3.addEventListener('duelStarted', handleNewDuel);
+    window.cambriaWeb3.addEventListener('duelCompleted', handleDuelCompleted);
+}
+
+
+function setupModalEventListeners() {
+    const modal = document.getElementById('duelModal');
+    const closeBtn = document.querySelector('.modal-close');
+    
+    // Close modal when clicking X
+    closeBtn.addEventListener('click', closeModal);
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && modal.style.display === 'block') {
+            closeModal();
+        }
+    });
+}
+
+async function tryAutoConnect() {
+    try {
+        // Initialize Web3 in read-only mode
+        const success = await window.cambriaWeb3.initialize();
+        if (success) {
+            updateConnectionStatus(true);
+            // Load live feed data
+            await loadLiveFeed();
+        }
+    } catch (error) {
+        console.log('Auto-connect failed:', error);
+    }
+}
+
+async function handleWalletSearch() {
+    const walletAddress = document.getElementById('walletSearchInput').value.trim();
+    
+    if (!walletAddress) {
+        window.cambriaWeb3.showError('Please enter a wallet address');
+        return;
+    }
+    
+    if (!isValidAddress(walletAddress)) {
+        window.cambriaWeb3.showError('Invalid wallet address format');
+        return;
+    }
+    
+    searchWallet(walletAddress);
+}
+
+async function searchWallet(walletAddress) {
+    try {
+        setLoadingState(true);
+        
+        // Show wallet-specific sections
+        document.getElementById('wallet-stats-section').style.display = 'block';
+        document.getElementById('duels-section').style.display = 'block';
+        
+        // Update AbScan link
+        document.getElementById('walletAbscanLink').href = window.cambriaWeb3.generateWalletLink(walletAddress);
+        
+        // Add to search history
+        addToSearchHistory(walletAddress);
+        
+        await loadWalletData(walletAddress);
+        document.getElementById('currentWalletAddress').textContent = walletAddress;
+        window.cambriaWeb3.showSuccess('Wallet data loaded successfully!');
+    } catch (error) {
+        console.error('Error loading wallet data:', error);
+        window.cambriaWeb3.showError('Failed to load wallet data. Please try again.');
+    } finally {
+        setLoadingState(false);
+    }
+}
+
+// Search history management
+function loadSearchHistory() {
+    try {
+        const historyItems = document.getElementById('historyItems');
+        historyItems.innerHTML = '';
+        
+        const searchHistory = JSON.parse(localStorage.getItem('cambriaSearchHistory')) || [];
+        
+        if (searchHistory.length === 0) {
+            historyItems.innerHTML = '<div class="history-item">No recent searches</div>';
+            return;
+        }
+        
+        // Sort by timestamp (newest first)
+        searchHistory.sort((a, b) => b.timestamp - a.timestamp);
+        
+        // Display only the most recent 10 searches
+        const recentSearches = searchHistory.slice(0, 10);
+        
+        recentSearches.forEach(item => {
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item';
+            
+            const timeAgo = getTimeAgo(item.timestamp);
+            
+            historyItem.innerHTML = `
+                <div class="history-address" onclick="searchWallet('${item.address}')">${window.cambriaWeb3.formatAddress(item.address)}</div>
+                <div class="history-time">${timeAgo}</div>
+                <button class="history-remove" onclick="removeFromSearchHistory('${item.address}', event)">×</button>
+            `;
+            
+            historyItems.appendChild(historyItem);
+        });
+    } catch (error) {
+        console.error('Error loading search history:', error);
+    }
+}
+
+function addToSearchHistory(address) {
+    try {
+        // Get current history
+        const searchHistory = JSON.parse(localStorage.getItem('cambriaSearchHistory')) || [];
+        
+        // Check if address already exists
+        const existingIndex = searchHistory.findIndex(item => item.address === address);
+        
+        // If it exists, remove it (we'll add it back at the top)
+        if (existingIndex !== -1) {
+            searchHistory.splice(existingIndex, 1);
+        }
+        
+        // Add the new search
+        searchHistory.push({
+            address: address,
+            timestamp: Date.now()
+        });
+        
+        // Limit to 20 most recent searches
+        if (searchHistory.length > 20) {
+            searchHistory.sort((a, b) => b.timestamp - a.timestamp);
+            searchHistory.splice(20);
+        }
+        
+        // Save back to localStorage
+        localStorage.setItem('cambriaSearchHistory', JSON.stringify(searchHistory));
+        
+        // Refresh the displayed history
+        loadSearchHistory();
+    } catch (error) {
+        console.error('Error adding to search history:', error);
+    }
+}
+
+function removeFromSearchHistory(address, event) {
+    try {
+        // Stop the click from bubbling up to the parent
+        event.stopPropagation();
+        
+        // Get current history
+        const searchHistory = JSON.parse(localStorage.getItem('cambriaSearchHistory')) || [];
+        
+        // Filter out the address
+        const newHistory = searchHistory.filter(item => item.address !== address);
+        
+        // Save back to localStorage
+        localStorage.setItem('cambriaSearchHistory', JSON.stringify(newHistory));
+        
+        // Refresh the displayed history
+        loadSearchHistory();
+    } catch (error) {
+        console.error('Error removing from search history:', error);
+    }
+}
+
+function getTimeAgo(timestamp) {
+    const now = Date.now();
+    const seconds = Math.floor((now - timestamp) / 1000);
+    
+    if (seconds < 60) return 'just now';
+    
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    
+    const date = new Date(timestamp);
+    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+}
+
+async function loadWalletData(walletAddress) {
+    try {
+        // Try to get data from smart contracts first
+        if (window.cambriaWeb3.isConnected) {
+            const stats = await window.cambriaWeb3.getWalletStats(walletAddress);
+            updateWalletStats(stats);
+            
+            const duelHistory = await window.cambriaWeb3.getDuelHistory(walletAddress);
+            updateDuelHistory(duelHistory);
+        } else {
+            // Fallback to mock data
+            loadMockData(walletAddress);
+        }
+    } catch (error) {
+        console.error('Error loading wallet data:', error);
+        // Fallback to mock data
+        loadMockData(walletAddress);
+    }
+}
+
+function updateWalletStats(stats) {
+    // Update total wager
+    document.querySelector('.stat-card:nth-child(1) .stat-value').textContent = 
+        `${stats.totalWagered.toFixed(3)} ETH`;
+    
+    // Update total ETH won
+    document.querySelector('.stat-card:nth-child(2) .stat-value').textContent = 
+        `${stats.totalETHWon.toFixed(3)} ETH`;
+    
+    // Update total profit (net after fees)
+    const profitElement = document.querySelector('.stat-card:nth-child(3) .stat-value');
+    profitElement.textContent = `${stats.netProfit >= 0 ? '+' : ''}${stats.netProfit.toFixed(3)} ETH`;
+    profitElement.className = `stat-value ${stats.netProfit >= 0 ? 'profit' : 'loss'}`;
+    
+    // Update win rate
+    document.querySelector('.stat-card:nth-child(4) .stat-value').textContent = 
+        `${stats.winRate}%`;
+    
+    // Update total duels
+    document.querySelector('.stat-card:nth-child(5) .stat-value').textContent = 
+        stats.totalDuels.toString();
+    
+    // Update wins
+    document.querySelector('.stat-card:nth-child(6) .stat-value').textContent = 
+        stats.wins.toString();
+    
+    // Update losses
+    document.querySelector('.stat-card:nth-child(7) .stat-value').textContent = 
+        stats.losses.toString();
+}
+
+function updateDuelHistory(duels) {
+    const tbody = document.querySelector('.duels-table tbody');
+    tbody.innerHTML = '';
+    
+    if (!duels || duels.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No duel history found for this wallet</td></tr>';
+        return;
+    }
+    
+    // Update the table
+    duels.forEach(duel => {
+        const row = document.createElement('tr');
+        const player1Link = `<a href="javascript:void(0);" onclick="searchWallet('${duel.player1}')" class="wallet-link">${window.cambriaWeb3.formatAddress(duel.player1)}</a>`;
+        const player2Link = `<a href="javascript:void(0);" onclick="searchWallet('${duel.player2}')" class="wallet-link">${window.cambriaWeb3.formatAddress(duel.player2)}</a>`;
+        const txButton = `<button class="tx-link" onclick="showDuelModal('${duel.id}', '${duel.player1}', '${duel.player2}', ${duel.wager})">View TX</button>`;
+        
+        row.innerHTML = `
+            <td>#${duel.id}</td>
+            <td>
+                <span class="${duel.winner === duel.currentPlayer ? 'winner' : 'loser'}">${player1Link}</span>
+                <span class="vs-badge">VS</span>
+                <span class="${duel.winner !== duel.currentPlayer ? 'winner' : 'loser'}">${player2Link}</span>
+            </td>
+            <td>${duel.wager.toFixed(3)} ETH</td>
+            <td class="${duel.winner === duel.currentPlayer ? 'profit' : 'loss'}">${duel.winner === duel.currentPlayer ? 'Win' : 'Loss'}</td>
+            <td class="${duel.netProfit >= 0 ? 'profit' : 'loss'}">${duel.netProfit >= 0 ? '+' : ''}${duel.netProfit.toFixed(3)} ETH</td>
+            <td>${txButton}</td>
+        `;
+        tbody.appendChild(row);
+    });
+    
+    // Update the wager distribution chart
+    if (window.wagerDistributionChart) {
+        // Initialize wager distribution buckets
+        const wagerDistribution = [0, 0, 0, 0, 0]; // [0.001-0.01, 0.01-0.05, 0.05-0.1, 0.1-0.5, 0.5+]
+        
+        // Count duels in each wager range
+        duels.forEach(duel => {
+            const wager = duel.wager;
+            if (wager < 0.01) {
+                wagerDistribution[0]++;
+            } else if (wager < 0.05) {
+                wagerDistribution[1]++;
+            } else if (wager < 0.1) {
+                wagerDistribution[2]++;
+            } else if (wager < 0.5) {
+                wagerDistribution[3]++;
+            } else {
+                wagerDistribution[4]++;
+            }
+        });
+        
+        // Update chart data
+        window.wagerDistributionChart.data.datasets[0].data = wagerDistribution;
+        window.wagerDistributionChart.update();
+    }
+}
+
+function loadMockData(walletAddress) {
+    // Use existing mock data as fallback
+    console.log('Loading mock data for wallet:', walletAddress);
+    
+    // Mock wallet statistics
+    const mockStats = {
+        address: walletAddress,
+        totalDuels: 142,
+        wins: 86,
+        losses: 56,
+        totalWagered: 4.582,
+        totalETHWon: 8.200,
+        netProfit: 0.412,
+        winRate: 60.6
+    };
+    
+    updateWalletStats(mockStats);
+    
+    // Mock duel history
+    const mockDuels = [
+        {
+            id: '7821',
+            player1: '0x8a34c7a0b2d1f1234567890abcdef1234567890',
+            player2: '0xcf89d1e0a43e2fedcba0987654321fedcba0987',
+            wager: 0.050,
+            winner: '0x8a34c7a0b2d1f1234567890abcdef1234567890',
+            currentPlayer: walletAddress,
+            netProfit: 0.045,
+            transactionHash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+            blockNumber: 12345678
+        },
+        {
+            id: '7819',
+            player1: '0x8a34c7a0b2d1f1234567890abcdef1234567890',
+            player2: '0xab45f1c2d67b9fedcba0987654321fedcba098765',
+            wager: 0.100,
+            winner: '0xab45f1c2d67b9fedcba0987654321fedcba098765',
+            currentPlayer: walletAddress,
+            netProfit: -0.100,
+            transactionHash: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
+            blockNumber: 12345679
+        },
+        {
+            id: '7810',
+            player1: '0x8a34c7a0b2d1f1234567890abcdef1234567890',
+            player2: '0x329a7b10e89c4fedcba0987654321fedcba098765',
+            wager: 0.075,
+            winner: '0x8a34c7a0b2d1f1234567890abcdef1234567890',
+            currentPlayer: walletAddress,
+            netProfit: 0.068,
+            transactionHash: '0x9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba',
+            blockNumber: 12345680
+        }
+    ];
+    
+    updateDuelHistory(mockDuels);
+}
+
+async function handleRefreshData() {
+    const currentWallet = document.getElementById('currentWalletAddress').textContent;
+    if (currentWallet && currentWallet !== '0x8a34c7a0...b2d1f') {
+        try {
+            setLoadingState(true);
+            await loadWalletData(currentWallet);
+            window.cambriaWeb3.showSuccess('Data refreshed successfully!');
+        } catch (error) {
+            console.error('Error refreshing data:', error);
+            window.cambriaWeb3.showError('Failed to refresh data');
+        } finally {
+            setLoadingState(false);
+        }
+    }
+}
+
+async function loadLiveFeed() {
+    try {
+        setLoadingState(true);
+        
+        let liveFeedData;
+        
+        // Try to get data from smart contracts first
+        if (window.cambriaWeb3.isConnected) {
+            liveFeedData = await window.cambriaWeb3.getRecentDuelActivity(20);
+        } else {
+            // Fallback to mock data
+            liveFeedData = getMockLiveFeedData();
+        }
+        
+        updateLiveFeed(liveFeedData);
+        
+    } catch (error) {
+        console.error('Error loading live feed:', error);
+        // Fallback to mock data
+        const mockData = getMockLiveFeedData();
+        updateLiveFeed(mockData);
+        window.cambriaWeb3.showError('Failed to load live data. Showing cached data.');
+    } finally {
+        setLoadingState(false);
+    }
+}
+
+function getMockLiveFeedData() {
+    return [
+        {
+            id: '7821',
+            player1: '0x8a34c7a0b2d1f1234567890abcdef1234567890',
+            player2: '0xcf89d1e0a43e2fedcba0987654321fedcba0987',
+            wager: 0.050,
+            winner: '0x8a34c7a0b2d1f1234567890abcdef1234567890',
+            loser: '0xcf89d1e0a43e2fedcba0987654321fedcba0987',
+            status: 'completed',
+            transactionHash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
+        },
+        {
+            id: '7820',
+            player1: '0xab45f1c2d67b9fedcba0987654321fedcba0987',
+            player2: '0x329a7b10e89c4fedcba0987654321fedcba0987',
+            wager: 0.100,
+            winner: null,
+            loser: null,
+            status: 'pending',
+            transactionHash: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
+        },
+        {
+            id: '7819',
+            player1: '0x6f1a5c89d72e8fedcba0987654321fedcba0987',
+            player2: '0x8a34c7a0b2d1f1234567890abcdef1234567890',
+            wager: 0.075,
+            winner: '0x6f1a5c89d72e8fedcba0987654321fedcba0987',
+            loser: '0x8a34c7a0b2d1f1234567890abcdef1234567890',
+            status: 'completed',
+            transactionHash: '0x9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba'
+        }
+    ];
+}
+
+function updateLiveFeed(duels) {
+    const tbody = document.getElementById('liveFeedTableBody');
+    tbody.innerHTML = '';
+    
+    if (!duels || duels.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No recent duel activity found</td></tr>';
+        return;
+    }
+    
+    let totalDuels = duels.length;
+    let pendingDuels = duels.filter(d => d.status === 'pending').length;
+    let completedDuels = duels.filter(d => d.status === 'completed').length;
+    
+    // Update feed stats
+    document.getElementById('totalDuelsCount').textContent = totalDuels;
+    document.getElementById('pendingDuelsCount').textContent = pendingDuels;
+    document.getElementById('completedDuelsCount').textContent = completedDuels;
+    
+    duels.forEach(duel => {
+        const row = document.createElement('tr');
+        const player1Link = `<a href="javascript:void(0);" onclick="searchWallet('${duel.player1}')" class="wallet-link">${window.cambriaWeb3.formatAddress(duel.player1)}</a>`;
+        const player2Link = `<a href="javascript:void(0);" onclick="searchWallet('${duel.player2}')" class="wallet-link">${window.cambriaWeb3.formatAddress(duel.player2)}</a>`;
+        const txButton = `<button class="tx-link" onclick="showDuelModal('${duel.id}', '${duel.player1}', '${duel.player2}', ${duel.wager})">View TX</button>`;
+        
+        let statusHtml = `<span class="status-${duel.status}">${duel.status.charAt(0).toUpperCase() + duel.status.slice(1)}</span>`;
+        let resultHtml = '-';
+        
+        if (duel.status === 'completed') {
+            const winnerLink = `<a href="javascript:void(0);" onclick="searchWallet('${duel.winner}')" class="wallet-link result-winner">${window.cambriaWeb3.formatAddress(duel.winner)}</a>`;
+            resultHtml = `Winner: ${winnerLink}`;
+        }
+        
+        row.innerHTML = `
+            <td>#${duel.id}</td>
+            <td>
+                ${player1Link}
+                <span class="vs-badge">VS</span>
+                ${player2Link}
+            </td>
+            <td>${duel.wager.toFixed(3)} ETH</td>
+            <td>${statusHtml}</td>
+            <td>${resultHtml}</td>
+            <td>${txButton}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+async function handleRefreshFeed() {
+    try {
+        await loadLiveFeed();
+        window.cambriaWeb3.showSuccess('Live feed refreshed!');
+    } catch (error) {
+        console.error('Error refreshing feed:', error);
+        window.cambriaWeb3.showError('Failed to refresh feed');
+    }
+}
+
+function setupRealTimeUpdates() {
+    // Set up periodic data refresh for live feed
+    setInterval(async () => {
+        if (window.cambriaWeb3.isConnected) {
+            try {
+                await loadLiveFeed();
+            } catch (error) {
+                console.error('Real-time update failed:', error);
+            }
+        }
+    }, CONFIG.UI.REFRESH_INTERVAL);
+    
+    // Set up periodic data refresh for wallet data
+    setInterval(async () => {
+        if (window.cambriaWeb3.isConnected) {
+            const currentWallet = document.getElementById('currentWalletAddress').textContent;
+            if (currentWallet && currentWallet !== 'Search for a wallet to view statistics') {
+                try {
+                    await loadWalletData(currentWallet);
+                } catch (error) {
+                    console.error('Real-time update failed:', error);
+                }
+            }
+        }
+    }, CONFIG.UI.REFRESH_INTERVAL);
+}
+
+function handleNewDuel(data) {
+    console.log('New duel detected:', data);
+    // Update UI to show new duel
+    window.cambriaWeb3.showSuccess(`New duel started: ${data.wager} ETH`);
+}
+
+function handleDuelCompleted(data) {
+    console.log('Duel completed:', data);
+    // Update UI to show completed duel
+    window.cambriaWeb3.showSuccess(`Duel completed! Winner: ${window.cambriaWeb3.formatAddress(data.winner)}`);
+    
+    // Refresh data if it's the current wallet
+    const currentWallet = document.getElementById('currentWalletAddress').textContent;
+    if (currentWallet.includes(data.winner) || currentWallet.includes(data.loser)) {
+        setTimeout(() => {
+            handleRefreshData();
+        }, 2000);
+    }
+}
+
+function updateConnectionStatus(isConnected) {
+    const statusIndicator = document.querySelector('.status-indicator');
+    const statusText = document.querySelector('.status-text');
+    
+    if (isConnected) {
+        statusIndicator.className = 'status-indicator online';
+        statusText.textContent = 'Connected';
+    } else {
+        statusIndicator.className = 'status-indicator offline';
+        statusText.textContent = 'Offline';
+    }
+}
+
+function setLoadingState(isLoading) {
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(btn => {
+        if (isLoading) {
+            btn.classList.add('loading');
+            btn.disabled = true;
+        } else {
+            btn.classList.remove('loading');
+            btn.disabled = false;
+        }
+    });
+}
+
+function isValidAddress(address) {
+    return /^0x[a-fA-F0-9]{40}$/.test(address);
+}
+
+// Modal Functions
+async function showDuelModal(duelId, player1, player2, wager) {
+    const modal = document.getElementById('duelModal');
+    
+    // Update modal header with duel info
+    document.getElementById('modalDuelId').textContent = duelId;
+    document.getElementById('modalPlayer1Link').textContent = window.cambriaWeb3.formatAddress(player1);
+    document.getElementById('modalPlayer1Link').href = window.cambriaWeb3.generateWalletLink(player1);
+    document.getElementById('modalPlayer2Link').textContent = window.cambriaWeb3.formatAddress(player2);
+    document.getElementById('modalPlayer2Link').href = window.cambriaWeb3.generateWalletLink(player2);
+    document.getElementById('modalWager').textContent = `${wager.toFixed(3)} ETH`;
+    
+    // Show modal
+    modal.style.display = 'block';
+    
+    // Load transactions
+    await loadDuelTransactions(duelId);
+}
+
+function closeModal() {
+    const modal = document.getElementById('duelModal');
+    modal.style.display = 'none';
+}
+
+async function loadDuelTransactions(duelId) {
+    const transactionsList = document.getElementById('transactionsList');
+    transactionsList.innerHTML = '<div class="loading-transactions">Loading transactions...</div>';
+    
+    try {
+        let transactions;
+        
+        // Try to get data from smart contracts first
+        if (window.cambriaWeb3.isConnected) {
+            transactions = await window.cambriaWeb3.getDuelTransactions(duelId);
+        } else {
+            // Fallback to mock data
+            transactions = getMockDuelTransactions(duelId);
+        }
+        
+        displayTransactions(transactions);
+        
+    } catch (error) {
+        console.error('Error loading duel transactions:', error);
+        // Fallback to mock data
+        const mockTransactions = getMockDuelTransactions(duelId);
+        displayTransactions(mockTransactions);
+        window.cambriaWeb3.showError('Failed to load live data. Showing cached data.');
+    }
+}
+
+function getMockDuelTransactions(duelId) {
+    return [
+        {
+            type: 'Duel Started',
+            typeClass: 'join-battle',
+            transactionHash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+            blockNumber: 12345678,
+            player1: '0x8a34c7a0b2d1f1234567890abcdef1234567890',
+            player2: '0xcf89d1e0a43e2fedcba0987654321fedcba0987',
+            wager: 0.050,
+            description: 'Duel initiated between players'
+        },
+        {
+            type: 'Wager Deposited',
+            typeClass: 'join-battle',
+            transactionHash: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
+            blockNumber: 12345679,
+            player: '0x8a34c7a0b2d1f1234567890abcdef1234567890',
+            amount: 0.050,
+            description: 'Player 0x8a34c7...b2d1f deposited wager'
+        },
+        {
+            type: 'Wager Deposited',
+            typeClass: 'join-battle',
+            transactionHash: '0x9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba',
+            blockNumber: 12345680,
+            player: '0xcf89d1e0a43e2fedcba0987654321fedcba0987',
+            amount: 0.050,
+            description: 'Player 0xcf89d1...a43e2 deposited wager'
+        },
+        {
+            type: 'Duel Completed',
+            typeClass: 'duel-completed',
+            transactionHash: '0x5555555555555555555555555555555555555555555555555555555555555555',
+            blockNumber: 12345685,
+            winner: '0x8a34c7a0b2d1f1234567890abcdef1234567890',
+            loser: '0xcf89d1e0a43e2fedcba0987654321fedcba0987',
+            totalWinnings: 0.100,
+            fee: 0.010,
+            description: 'Duel completed - Winner: 0x8a34c7...b2d1f'
+        },
+        {
+            type: 'Funds Released',
+            typeClass: 'funds-released',
+            transactionHash: '0x6666666666666666666666666666666666666666666666666666666666666666',
+            blockNumber: 12345686,
+            winner: '0x8a34c7a0b2d1f1234567890abcdef1234567890',
+            amount: 0.090,
+            fee: 0.010,
+            description: 'Funds released to winner 0x8a34c7...b2d1f'
+        }
+    ];
+}
+
+function displayTransactions(transactions) {
+    const transactionsList = document.getElementById('transactionsList');
+    
+    if (transactions.length === 0) {
+        transactionsList.innerHTML = '<div class="no-transactions">No transactions found for this duel.</div>';
+        return;
+    }
+    
+    transactionsList.innerHTML = '';
+    
+    transactions.forEach(tx => {
+        const transactionItem = document.createElement('div');
+        transactionItem.className = 'transaction-item';
+        
+        let detailsHtml = '';
+        
+        if (tx.type === 'Duel Started') {
+            detailsHtml = `
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Player 1</div>
+                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(tx.player1)}</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Player 2</div>
+                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(tx.player2)}</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Wager Amount</div>
+                    <div class="transaction-detail-value">${tx.wager.toFixed(3)} ETH</div>
+                </div>
+            `;
+        } else if (tx.type === 'Wager Deposited') {
+            detailsHtml = `
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Player</div>
+                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(tx.player)}</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Amount</div>
+                    <div class="transaction-detail-value">${tx.amount.toFixed(3)} ETH</div>
+                </div>
+            `;
+        } else if (tx.type === 'Duel Completed') {
+            detailsHtml = `
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Winner</div>
+                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(tx.winner)}</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Loser</div>
+                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(tx.loser)}</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Total Winnings</div>
+                    <div class="transaction-detail-value">${tx.totalWinnings.toFixed(3)} ETH</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Platform Fee</div>
+                    <div class="transaction-detail-value">${tx.fee.toFixed(3)} ETH</div>
+                </div>
+            `;
+        } else if (tx.type === 'Funds Released') {
+            detailsHtml = `
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Winner</div>
+                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(tx.winner)}</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Amount Released</div>
+                    <div class="transaction-detail-value">${tx.amount.toFixed(3)} ETH</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Fee Deducted</div>
+                    <div class="transaction-detail-value">${tx.fee.toFixed(3)} ETH</div>
+                </div>
+            `;
+        }
+        
+        transactionItem.innerHTML = `
+            <div class="transaction-header">
+                <div class="transaction-type ${tx.typeClass}">${tx.type}</div>
+                <div class="transaction-hash">Block #${tx.blockNumber}</div>
+            </div>
+            <div class="transaction-details">
+                ${detailsHtml}
+            </div>
+            <div class="transaction-detail">
+                <div class="transaction-detail-label">Description</div>
+                <div class="transaction-detail-value">${tx.description}</div>
+            </div>
+            <a href="${window.cambriaWeb3.generateTransactionLink(tx.transactionHash)}" target="_blank" class="transaction-link">
+                🔗 View Transaction on Abstract L2
+            </a>
+        `;
+        
+        transactionsList.appendChild(transactionItem);
+    });
+}
+
+// Handle network changes
+if (typeof window.ethereum !== 'undefined') {
+    window.ethereum.on('accountsChanged', (accounts) => {
+        if (accounts.length === 0) {
+            updateConnectionStatus(false);
+            window.cambriaWeb3.stopEventListening();
+        } else {
+            connectWallet();
+        }
+    });
+    
+    window.ethereum.on('chainChanged', (chainId) => {
+        window.location.reload();
+    });
+}
+</script>
+</body>
+</html>
