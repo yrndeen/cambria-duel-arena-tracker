@@ -112,7 +112,7 @@
 
         .donate-hero {
             text-align: center;
-            margin-bottom: 60px;
+            margin-bottom: 80px;
         }
 
         .donate-hero h1 {
@@ -130,226 +130,208 @@
             font-size: 18px;
             color: var(--text-secondary);
             max-width: 600px;
-            margin: 0 auto;
+            margin: 0 auto 40px;
         }
 
-        .donate-content {
+        .donation-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
             margin-bottom: 60px;
         }
 
-        .donate-info {
+        .donation-card {
             background: var(--dark-light);
+            border-radius: 16px;
             padding: 40px;
-            border-radius: 12px;
             border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
 
-        .donate-info h2 {
+        .donation-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(106, 61, 154, 0.2);
+        }
+
+        .donation-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+
+        .crypto-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .crypto-title {
             font-family: 'Orbitron', sans-serif;
             font-size: 24px;
-            margin-bottom: 20px;
-            color: var(--secondary);
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text);
         }
 
-        .donate-info p {
+        .crypto-description {
             color: var(--text-secondary);
-            margin-bottom: 20px;
-            line-height: 1.8;
+            margin-bottom: 25px;
+            font-size: 14px;
         }
 
-        .donate-address {
+        .address-container {
             background: var(--dark-lighter);
+            border-radius: 12px;
             padding: 20px;
-            border-radius: 8px;
+            margin-bottom: 20px;
             border: 1px solid var(--border);
-            margin: 20px 0;
         }
 
         .address-label {
-            font-size: 14px;
+            font-size: 12px;
             color: var(--text-muted);
-            margin-bottom: 10px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            margin-bottom: 8px;
         }
 
         .address-value {
             font-family: 'Courier New', monospace;
-            font-size: 16px;
+            font-size: 14px;
             color: var(--text);
             word-break: break-all;
-            margin-bottom: 15px;
+            line-height: 1.4;
         }
 
-        .copy-address-btn {
-            background: var(--primary);
+        .copy-btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             color: white;
             border: none;
             padding: 12px 24px;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 14px;
             transition: all 0.3s;
             display: flex;
             align-items: center;
             gap: 8px;
-        }
-
-        .copy-address-btn:hover {
-            background: var(--primary-light);
-            transform: translateY(-2px);
-        }
-
-        .copy-address-btn.copied {
-            background: var(--success);
-        }
-
-        .donate-methods {
-            background: var(--dark-light);
-            padding: 40px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
-
-        .donate-methods h2 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 24px;
-            margin-bottom: 20px;
-            color: var(--secondary);
-        }
-
-        .method-card {
-            background: var(--dark-lighter);
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            margin-bottom: 20px;
-            transition: all 0.3s;
-        }
-
-        .method-card:hover {
-            border-color: var(--primary);
-            transform: translateY(-2px);
-        }
-
-        .method-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: var(--text);
-        }
-
-        .method-description {
-            color: var(--text-secondary);
-            margin-bottom: 15px;
-        }
-
-        .method-address {
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            color: var(--secondary);
-            word-break: break-all;
-            background: var(--dark);
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 10px;
-        }
-
-
-        .donation-amounts {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 15px;
-            margin: 30px 0;
-        }
-
-        .amount-btn {
-            background: var(--dark-lighter);
-            color: var(--text);
-            border: 1px solid var(--border);
-            padding: 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s;
-            text-align: center;
-        }
-
-        .amount-btn:hover {
-            border-color: var(--primary);
-            background: var(--primary);
-            color: white;
-        }
-
-        .amount-btn.selected {
-            border-color: var(--primary);
-            background: var(--primary);
-            color: white;
-        }
-
-        .custom-amount {
-            margin-top: 20px;
-        }
-
-        .custom-amount input {
             width: 100%;
-            padding: 12px;
-            background: var(--dark-lighter);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text);
-            font-size: 16px;
+            justify-content: center;
         }
 
-        .custom-amount input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .donate-button {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            width: 100%;
-            margin-top: 20px;
-        }
-
-        .donate-button:hover {
+        .copy-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(106, 61, 154, 0.3);
         }
 
-        .donate-button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
+        .copy-btn.copied {
+            background: var(--success);
+        }
+
+        .copy-btn.copied:hover {
+            background: var(--success);
             transform: none;
+        }
+
+        .network-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 15px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .network-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        .support-section {
+            background: var(--dark-light);
+            border-radius: 16px;
+            padding: 50px;
+            text-align: center;
+            border: 1px solid var(--border);
+            margin-bottom: 40px;
+        }
+
+        .support-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--secondary);
+        }
+
+        .support-description {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 800px;
+            margin: 0 auto 30px;
+            line-height: 1.8;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .benefit-item {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .benefit-icon {
+            font-size: 36px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .benefit-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text);
+        }
+
+        .benefit-description {
+            font-size: 14px;
+            color: var(--text-secondary);
         }
 
         .thank-you {
             text-align: center;
+            padding: 40px;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            border-radius: 16px;
             margin-top: 40px;
-            padding: 30px;
-            background: var(--dark-light);
-            border-radius: 12px;
-            border: 1px solid var(--border);
         }
 
         .thank-you h3 {
-            color: var(--success);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
             margin-bottom: 15px;
+            color: var(--text);
         }
 
         .thank-you p {
+            font-size: 16px;
             color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
         }
 
         footer {
@@ -412,7 +394,7 @@
                 margin-top: 20px;
             }
 
-            .donate-content {
+            .donation-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -420,8 +402,12 @@
                 font-size: 36px;
             }
 
-            .donation-amounts {
-                grid-template-columns: repeat(2, 1fr);
+            .support-section {
+                padding: 30px 20px;
+            }
+
+            .benefits-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -454,61 +440,101 @@
                 <p>Help keep the Cambria Duel Arena Tracker running and improving. Your donations help cover server costs, development time, and new features.</p>
             </div>
 
-            <div class="donate-content">
-                <div class="donate-info">
-                    <h2>Why Donate?</h2>
-                    <p>This project is built and maintained by developers who are passionate about the Cambria ecosystem. Your support helps us:</p>
-                    <ul style="color: var(--text-secondary); margin-left: 20px; margin-bottom: 20px;">
-                        <li>Keep the site running 24/7</li>
-                        <li>Add new features and improvements</li>
-                        <li>Maintain real-time data accuracy</li>
-                        <li>Support the community</li>
-                    </ul>
-
-                    <div class="donate-address">
+            <div class="donation-grid">
+                <div class="donation-card">
+                    <span class="crypto-icon">🔷</span>
+                    <h3 class="crypto-title">Ethereum (ETH)</h3>
+                    <p class="crypto-description">Send ETH directly to our wallet address</p>
+                    
+                    <div class="address-container">
                         <div class="address-label">Ethereum Address</div>
-                        <div class="address-value" id="donationAddress">0x698e41734141ab1557a6c9e1bfdfbc875248336b</div>
-                        <button class="copy-address-btn" onclick="copyDonationAddress()">
-                            <span id="copyIcon">📋</span>
-                            <span id="copyText">Copy Address</span>
-                        </button>
+                        <div class="address-value" id="ethAddress">0x698e41734141ab1557a6c9e1bfdfbc875248336b</div>
                     </div>
-
+                    
+                    <button class="copy-btn" onclick="copyAddress('ethAddress', 'ETH')">
+                        <span>📋</span>
+                        <span>Copy ETH Address</span>
+                    </button>
+                    
+                    <div class="network-info">
+                        <span class="network-dot"></span>
+                        <span>Ethereum Mainnet & Abstract L2</span>
+                    </div>
                 </div>
 
-                <div class="donate-methods">
-                    <h2>Donation Methods</h2>
+                <div class="donation-card">
+                    <span class="crypto-icon">₿</span>
+                    <h3 class="crypto-title">Bitcoin (BTC)</h3>
+                    <p class="crypto-description">Send Bitcoin to our Bitcoin address</p>
                     
-                    <div class="method-card">
-                        <div class="method-title">Direct Transfer</div>
-                        <div class="method-description">Send ETH directly to the address above using your wallet</div>
-                        <div class="method-address">0x698e41734141ab1557a6c9e1bfdfbc875248336b</div>
+                    <div class="address-container">
+                        <div class="address-label">Bitcoin Address</div>
+                        <div class="address-value" id="btcAddress">bc1prguzp8z59lah92yy08f7d0mf5dpy2fuzdwlg4uy8matlpm53vd0qrrkzrt</div>
                     </div>
-
-                    <div class="method-card">
-                        <div class="method-title">Abstract L2</div>
-                        <div class="method-description">Send on Abstract L2 for lower gas fees</div>
-                        <div class="method-address">0x698e41734141ab1557a6c9e1bfdfbc875248336b</div>
+                    
+                    <button class="copy-btn" onclick="copyAddress('btcAddress', 'BTC')">
+                        <span>📋</span>
+                        <span>Copy BTC Address</span>
+                    </button>
+                    
+                    <div class="network-info">
+                        <span class="network-dot"></span>
+                        <span>Bitcoin Network</span>
                     </div>
+                </div>
 
-                    <div class="method-card">
-                        <div class="method-title">Bitcoin (BTC)</div>
-                        <div class="method-description">Send Bitcoin to the address below</div>
-                        <div class="method-address" id="btcAddress">bc1prguzp8z59lah92yy08f7d0mf5dpy2fuzdwlg4uy8matlpm53vd0qrrkzrt</div>
-                        <button class="copy-address-btn" onclick="copyAddress('btcAddress')">
-                            <span>📋</span>
-                            <span>Copy BTC Address</span>
-                        </button>
+                <div class="donation-card">
+                    <span class="crypto-icon">◎</span>
+                    <h3 class="crypto-title">Solana (SOL)</h3>
+                    <p class="crypto-description">Send Solana to our Solana address</p>
+                    
+                    <div class="address-container">
+                        <div class="address-label">Solana Address</div>
+                        <div class="address-value" id="solAddress">3giEjoBj4aZfyjHzzV2TKUSjmBDiZrSA94Lxx3zBDHLA</div>
                     </div>
+                    
+                    <button class="copy-btn" onclick="copyAddress('solAddress', 'SOL')">
+                        <span>📋</span>
+                        <span>Copy SOL Address</span>
+                    </button>
+                    
+                    <div class="network-info">
+                        <span class="network-dot"></span>
+                        <span>Solana Network</span>
+                    </div>
+                </div>
+            </div>
 
-                    <div class="method-card">
-                        <div class="method-title">Solana (SOL)</div>
-                        <div class="method-description">Send Solana to the address below</div>
-                        <div class="method-address" id="solAddress">3giEjoBj4aZfyjHzzV2TKUSjmBDiZrSA94Lxx3zBDHLA</div>
-                        <button class="copy-address-btn" onclick="copyAddress('solAddress')">
-                            <span>📋</span>
-                            <span>Copy SOL Address</span>
-                        </button>
+            <div class="support-section">
+                <h2 class="support-title">Why Support Us?</h2>
+                <p class="support-description">
+                    This project is built and maintained by developers who are passionate about the Cambria ecosystem. 
+                    Your support helps us continue providing valuable tools and insights to the community.
+                </p>
+                
+                <div class="benefits-grid">
+                    <div class="benefit-item">
+                        <span class="benefit-icon">🚀</span>
+                        <h4 class="benefit-title">Keep Running 24/7</h4>
+                        <p class="benefit-description">Maintain servers and infrastructure for continuous data tracking</p>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <span class="benefit-icon">⚡</span>
+                        <h4 class="benefit-title">New Features</h4>
+                        <p class="benefit-description">Develop new tools and improvements based on community feedback</p>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <span class="benefit-icon">📊</span>
+                        <h4 class="benefit-title">Data Accuracy</h4>
+                        <p class="benefit-description">Ensure real-time data accuracy and reliability</p>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <span class="benefit-icon">👥</span>
+                        <h4 class="benefit-title">Community Support</h4>
+                        <p class="benefit-description">Help us support and grow the Cambria community</p>
                     </div>
                 </div>
             </div>
@@ -539,36 +565,12 @@
     </footer>
 
     <script>
-        const DONATION_ADDRESS = '0x698e41734141ab1557a6c9e1bfdfbc875248336b';
-
-
-        function copyDonationAddress() {
-            navigator.clipboard.writeText(DONATION_ADDRESS).then(function() {
-                const copyBtn = document.querySelector('.copy-address-btn');
-                const copyIcon = copyBtn.querySelector('span:first-child');
-                const copyText = copyBtn.querySelector('span:last-child');
-                
-                copyIcon.textContent = '✓';
-                copyText.textContent = 'Copied!';
-                copyBtn.classList.add('copied');
-                
-                setTimeout(() => {
-                    copyIcon.textContent = '📋';
-                    copyText.textContent = 'Copy Address';
-                    copyBtn.classList.remove('copied');
-                }, 2000);
-            }).catch(function(err) {
-                console.error('Failed to copy address:', err);
-                alert('Failed to copy address. Please copy manually.');
-            });
-        }
-
-        function copyAddress(elementId) {
+        function copyAddress(elementId, cryptoType) {
             const addressElement = document.getElementById(elementId);
             const address = addressElement.textContent;
             
             navigator.clipboard.writeText(address).then(function() {
-                const copyBtn = addressElement.nextElementSibling;
+                const copyBtn = addressElement.parentElement.nextElementSibling;
                 const copyIcon = copyBtn.querySelector('span:first-child');
                 const copyText = copyBtn.querySelector('span:last-child');
                 
@@ -578,7 +580,7 @@
                 
                 setTimeout(() => {
                     copyIcon.textContent = '📋';
-                    copyText.textContent = copyText.textContent.replace('Copied!', 'Copy ' + (elementId === 'btcAddress' ? 'BTC' : 'SOL') + ' Address');
+                    copyText.textContent = `Copy ${cryptoType} Address`;
                     copyBtn.classList.remove('copied');
                 }, 2000);
             }).catch(function(err) {
@@ -586,7 +588,6 @@
                 alert('Failed to copy address. Please copy manually.');
             });
         }
-
     </script>
 </body>
 </html>
