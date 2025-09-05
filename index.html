@@ -152,6 +152,16 @@ transition: background-color 0.3s;
 background-color: var(--primary-light);
 }
 
+.abs-portal-btn {
+background-color: #28a745 !important;
+color: white !important;
+}
+
+.abs-portal-btn:hover {
+background-color: #218838 !important;
+color: white !important;
+}
+
 .search-history {
 position: absolute;
 top: 100%;
@@ -1077,6 +1087,7 @@ margin-top: 20px;
         <div class="wallet-header">
             <div class="wallet-address" id="currentWalletAddress">Search for a wallet to view statistics</div>
             <div class="wallet-actions">
+                <a href="#" id="absPortalLink" target="_blank" class="search-btn abs-portal-btn" style="text-decoration: none;">ABS Portal</a>
                 <button class="search-btn" id="refreshDataBtn">Refresh Data</button>
                 <a href="#" id="walletAbscanLink" target="_blank" class="search-btn" style="text-decoration: none;">View on AbScan</a>
                 <div class="connection-status" id="connectionStatus">
@@ -1296,6 +1307,9 @@ async function initializeApp() {
     document.getElementById('wallet-stats-section').style.display = 'none';
     document.getElementById('duels-section').style.display = 'none';
     
+    // Initialize ABS Portal link
+    document.getElementById('absPortalLink').href = '#';
+    
     // Try to auto-connect if previously connected
     await tryAutoConnect();
     
@@ -1513,6 +1527,9 @@ async function searchWallet(walletAddress) {
         
         // Update AbScan link
         document.getElementById('walletAbscanLink').href = window.cambriaWeb3.generateWalletLink(walletAddress);
+        
+        // Update ABS Portal link
+        document.getElementById('absPortalLink').href = `https://portal.abs.xyz/profile/${walletAddress}`;
         
         // Add to search history
         addToSearchHistory(walletAddress);
