@@ -637,6 +637,35 @@ transition: transform 0.3s;
     font-weight: 500;
 }
 
+.transaction-status {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.transaction-status.pending {
+    background-color: rgba(255, 140, 0, 0.2);
+    color: #ff8c00;
+}
+
+.transaction-status.active {
+    background-color: rgba(0, 180, 216, 0.2);
+    color: #00b4d8;
+}
+
+.transaction-status.completed {
+    background-color: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+}
+
+.transaction-status.cancelled {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
 .result-winner {
     color: var(--success);
     font-weight: 500;
@@ -2032,53 +2061,39 @@ async function loadDuelTransactions(duelId) {
 function getMockDuelTransactions(duelId) {
     return [
         {
-            type: 'Duel Started',
-            typeClass: 'join-battle',
+            type: 'Duel Initiation',
+            typeClass: 'duel-initiated',
+            status: 'Pending',
             transactionHash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
             blockNumber: 12345678,
             player1: '0x8a34c7a0b2d1f1234567890abcdef1234567890',
             player2: '0xcf89d1e0a43e2fedcba0987654321fedcba0987',
             wager: 0.050,
-            description: 'Duel initiated between players'
+            description: 'Player 0x8a34c7...b2d1f initiated duel with 0xcf89d1...a43e2',
+            functionName: 'initBattle'
         },
         {
-            type: 'Wager Deposited',
-            typeClass: 'join-battle',
+            type: 'Duel Joining',
+            typeClass: 'duel-joined',
+            status: 'Active',
             transactionHash: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
             blockNumber: 12345679,
-            player: '0x8a34c7a0b2d1f1234567890abcdef1234567890',
-            amount: 0.050,
-            description: 'Player 0x8a34c7...b2d1f deposited wager'
+            player2: '0xcf89d1e0a43e2fedcba0987654321fedcba0987',
+            description: 'Player 0xcf89d1...a43e2 joined the duel',
+            functionName: 'joinBattle'
         },
         {
-            type: 'Wager Deposited',
-            typeClass: 'join-battle',
-            transactionHash: '0x9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba',
-            blockNumber: 12345680,
-            player: '0xcf89d1e0a43e2fedcba0987654321fedcba0987',
-            amount: 0.050,
-            description: 'Player 0xcf89d1...a43e2 deposited wager'
-        },
-        {
-            type: 'Duel Completed',
+            type: 'Duel Completion',
             typeClass: 'duel-completed',
+            status: 'Completed',
             transactionHash: '0x5555555555555555555555555555555555555555555555555555555555555555',
             blockNumber: 12345685,
             winner: '0x8a34c7a0b2d1f1234567890abcdef1234567890',
             loser: '0xcf89d1e0a43e2fedcba0987654321fedcba0987',
             totalWinnings: 0.100,
-            fee: 0.010,
-            description: 'Duel completed - Winner: 0x8a34c7...b2d1f'
-        },
-        {
-            type: 'Funds Released',
-            typeClass: 'funds-released',
-            transactionHash: '0x6666666666666666666666666666666666666666666666666666666666666666',
-            blockNumber: 12345686,
-            winner: '0x8a34c7a0b2d1f1234567890abcdef1234567890',
-            amount: 0.090,
-            fee: 0.010,
-            description: 'Funds released to winner 0x8a34c7...b2d1f'
+            fee: 0.005,
+            description: 'Duel completed - Winner: 0x8a34c7...b2d1f',
+            functionName: 'claimProceeds'
         }
     ];
 }
@@ -2093,93 +2108,149 @@ function displayTransactions(transactions) {
     
     transactionsList.innerHTML = '';
     
-    transactions.forEach(tx => {
+    // Display exactly 3 transaction boxes in order
+    const box1 = transactions.find(tx => tx.type === 'Duel Initiation');
+    const box2 = transactions.find(tx => tx.type === 'Duel Joining');
+    const box3 = transactions.find(tx => tx.type === 'Duel Completion' || tx.type === 'Duel Cancellation');
+    
+    // Box 1: Duel Initiation (initBattle) → Status: Pending
+    if (box1) {
+        const transactionItem = document.createElement('div');
+        transactionItem.className = 'transaction-item';
+        
+        transactionItem.innerHTML = `
+            <div class="transaction-header">
+                <div class="transaction-type ${box1.typeClass}">${box1.type}</div>
+                <div class="transaction-status pending">Status: ${box1.status}</div>
+            </div>
+            <div class="transaction-details">
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Player 1</div>
+                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(box1.player1)}</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Player 2</div>
+                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(box1.player2)}</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Wager Amount</div>
+                    <div class="transaction-detail-value">${box1.wager.toFixed(3)} ETH</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Function</div>
+                    <div class="transaction-detail-value">${box1.functionName}</div>
+                </div>
+            </div>
+            <div class="transaction-detail">
+                <div class="transaction-detail-label">Description</div>
+                <div class="transaction-detail-value">${box1.description}</div>
+            </div>
+            <a href="${window.cambriaWeb3.generateTransactionLink(box1.transactionHash)}" target="_blank" class="transaction-link">
+                🔗 View Transaction on Abstract L2
+            </a>
+        `;
+        
+        transactionsList.appendChild(transactionItem);
+    }
+    
+    // Box 2: Duel Joining (joinBattle) → Status: Active
+    if (box2) {
+        const transactionItem = document.createElement('div');
+        transactionItem.className = 'transaction-item';
+        
+        transactionItem.innerHTML = `
+            <div class="transaction-header">
+                <div class="transaction-type ${box2.typeClass}">${box2.type}</div>
+                <div class="transaction-status active">Status: ${box2.status}</div>
+            </div>
+            <div class="transaction-details">
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Player 2</div>
+                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(box2.player2)}</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Function</div>
+                    <div class="transaction-detail-value">${box2.functionName}</div>
+                </div>
+            </div>
+            <div class="transaction-detail">
+                <div class="transaction-detail-label">Description</div>
+                <div class="transaction-detail-value">${box2.description}</div>
+            </div>
+            <a href="${window.cambriaWeb3.generateTransactionLink(box2.transactionHash)}" target="_blank" class="transaction-link">
+                🔗 View Transaction on Abstract L2
+            </a>
+        `;
+        
+        transactionsList.appendChild(transactionItem);
+    }
+    
+    // Box 3: Duel Completion (claimProceeds) OR Duel Cancellation (nullifyBattle)
+    if (box3) {
         const transactionItem = document.createElement('div');
         transactionItem.className = 'transaction-item';
         
         let detailsHtml = '';
         
-        if (tx.type === 'Duel Started') {
-            detailsHtml = `
-                <div class="transaction-detail">
-                    <div class="transaction-detail-label">Player 1</div>
-                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(tx.player1)}</div>
-                </div>
-                <div class="transaction-detail">
-                    <div class="transaction-detail-label">Player 2</div>
-                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(tx.player2)}</div>
-                </div>
-                <div class="transaction-detail">
-                    <div class="transaction-detail-label">Wager Amount</div>
-                    <div class="transaction-detail-value">${tx.wager.toFixed(3)} ETH</div>
-                </div>
-            `;
-        } else if (tx.type === 'Wager Deposited') {
-            detailsHtml = `
-                <div class="transaction-detail">
-                    <div class="transaction-detail-label">Player</div>
-                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(tx.player)}</div>
-                </div>
-                <div class="transaction-detail">
-                    <div class="transaction-detail-label">Amount</div>
-                    <div class="transaction-detail-value">${tx.amount.toFixed(3)} ETH</div>
-                </div>
-            `;
-        } else if (tx.type === 'Duel Completed') {
+        if (box3.type === 'Duel Completion') {
             detailsHtml = `
                 <div class="transaction-detail">
                     <div class="transaction-detail-label">Winner</div>
-                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(tx.winner)}</div>
+                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(box3.winner)}</div>
                 </div>
                 <div class="transaction-detail">
                     <div class="transaction-detail-label">Loser</div>
-                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(tx.loser)}</div>
+                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(box3.loser)}</div>
                 </div>
                 <div class="transaction-detail">
                     <div class="transaction-detail-label">Total Winnings</div>
-                    <div class="transaction-detail-value">${tx.totalWinnings.toFixed(3)} ETH</div>
+                    <div class="transaction-detail-value">${box3.totalWinnings.toFixed(3)} ETH</div>
                 </div>
                 <div class="transaction-detail">
                     <div class="transaction-detail-label">Platform Fee</div>
-                    <div class="transaction-detail-value">${tx.fee.toFixed(3)} ETH</div>
+                    <div class="transaction-detail-value">${box3.fee.toFixed(3)} ETH</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Function</div>
+                    <div class="transaction-detail-value">${box3.functionName}</div>
                 </div>
             `;
-        } else if (tx.type === 'Funds Released') {
+        } else if (box3.type === 'Duel Cancellation') {
             detailsHtml = `
                 <div class="transaction-detail">
-                    <div class="transaction-detail-label">Winner</div>
-                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(tx.winner)}</div>
+                    <div class="transaction-detail-label">Cancelled By</div>
+                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(box3.player)}</div>
                 </div>
                 <div class="transaction-detail">
-                    <div class="transaction-detail-label">Amount Released</div>
-                    <div class="transaction-detail-value">${tx.amount.toFixed(3)} ETH</div>
+                    <div class="transaction-detail-label">Refund Amount</div>
+                    <div class="transaction-detail-value">${box3.refundAmount.toFixed(3)} ETH</div>
                 </div>
                 <div class="transaction-detail">
-                    <div class="transaction-detail-label">Fee Deducted</div>
-                    <div class="transaction-detail-value">${tx.fee.toFixed(3)} ETH</div>
+                    <div class="transaction-detail-label">Function</div>
+                    <div class="transaction-detail-value">${box3.functionName}</div>
                 </div>
             `;
         }
         
         transactionItem.innerHTML = `
             <div class="transaction-header">
-                <div class="transaction-type ${tx.typeClass}">${tx.type}</div>
-                <div class="transaction-hash">Block #${tx.blockNumber}</div>
+                <div class="transaction-type ${box3.typeClass}">${box3.type}</div>
+                <div class="transaction-status ${box3.status.toLowerCase()}">Status: ${box3.status}</div>
             </div>
             <div class="transaction-details">
                 ${detailsHtml}
             </div>
             <div class="transaction-detail">
                 <div class="transaction-detail-label">Description</div>
-                <div class="transaction-detail-value">${tx.description}</div>
+                <div class="transaction-detail-value">${box3.description}</div>
             </div>
-            <a href="${window.cambriaWeb3.generateTransactionLink(tx.transactionHash)}" target="_blank" class="transaction-link">
+            <a href="${window.cambriaWeb3.generateTransactionLink(box3.transactionHash)}" target="_blank" class="transaction-link">
                 🔗 View Transaction on Abstract L2
             </a>
         `;
         
         transactionsList.appendChild(transactionItem);
-    });
+    }
 }
 
 // Handle network changes

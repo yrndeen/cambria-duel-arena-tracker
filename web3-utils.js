@@ -841,72 +841,72 @@ class CambriaWeb3 {
             }
 
             try {
-                // Batch all event queries in parallel for correct duel flow
+                // Query only the 3 specific transaction types for the modal
                 const [
                     duelInitiatedEvents,
                     duelJoinedEvents,
                     duelCompletedEvents,
-                    duelNullifiedEvents,
-                    proceedsClaimedEvents
+                    duelNullifiedEvents
                 ] = await Promise.all([
-                    // Get DuelInitiated event (initBattle function)
+                    // 1. DuelInitiated event (initBattle function) → Status: Pending
                     this.contracts.duelArenaBattle.queryFilter(
                         this.contracts.duelArenaBattle.filters.DuelInitiated(duelId)
                     ),
-                    // Get DuelJoined event (joinBattle function)
+                    // 2. DuelJoined event (joinBattle function) → Status: Active
                     this.contracts.duelArenaBattle.queryFilter(
                         this.contracts.duelArenaBattle.filters.DuelJoined(duelId)
                     ),
-                    // Get DuelCompleted event (claimProceeds function)
+                    // 3a. DuelCompleted event (claimProceeds function) → Status: Completed
                     this.contracts.duelArenaBattle.queryFilter(
                         this.contracts.duelArenaBattle.filters.DuelCompleted(duelId)
                     ),
-                    // Get DuelNullified event (nullifyBattle function)
+                    // 3b. DuelNullified event (nullifyBattle function) → Status: Cancelled
                     this.contracts.duelArenaBattle.queryFilter(
                         this.contracts.duelArenaBattle.filters.DuelNullified(duelId)
-                    ),
-                    // Get ProceedsClaimed event (claimProceeds function)
-                    this.contracts.duelArenaBattle.queryFilter(
-                        this.contracts.duelArenaBattle.filters.ProceedsClaimed(duelId)
                     )
                 ]);
                 
-                // Process all events into transactions array
+                // Process events into exactly 3 transaction boxes
                 const transactions = [];
                 
-                // Process DuelInitiated events (initBattle)
+                // Box 1: Duel Initiation (initBattle) → Status: Pending
                 for (const event of duelInitiatedEvents) {
                     transactions.push({
-                        type: 'Duel Initiated',
+                        type: 'Duel Initiation',
                         typeClass: 'duel-initiated',
+                        status: 'Pending',
                         transactionHash: event.transactionHash,
                         blockNumber: event.blockNumber,
                         player1: event.args.player1,
                         player2: event.args.player2,
                         wager: parseFloat(ethers.utils.formatEther(event.args.wager)),
                         duelId: event.args.duelId.toString(),
-                        description: `Player ${this.formatAddress(event.args.player1)} initiated duel with ${this.formatAddress(event.args.player2)} (initBattle)`
+                        description: `Player ${this.formatAddress(event.args.player1)} initiated duel with ${this.formatAddress(event.args.player2)}`,
+                        functionName: 'initBattle'
                     });
                 }
                 
-                // Process DuelJoined events (joinBattle)
+                // Box 2: Duel Joining (joinBattle) → Status: Active
                 for (const event of duelJoinedEvents) {
                     transactions.push({
-                        type: 'Duel Joined',
+                        type: 'Duel Joining',
                         typeClass: 'duel-joined',
+                        status: 'Active',
                         transactionHash: event.transactionHash,
                         blockNumber: event.blockNumber,
                         player2: event.args.player2,
                         duelId: event.args.duelId.toString(),
-                        description: `Player ${this.formatAddress(event.args.player2)} joined the duel (joinBattle)`
+                        description: `Player ${this.formatAddress(event.args.player2)} joined the duel`,
+                        functionName: 'joinBattle'
                     });
                 }
                 
-                // Process DuelCompleted events (claimProceeds)
+                // Box 3a: Duel Completion (claimProceeds) → Status: Completed
                 for (const event of duelCompletedEvents) {
                     transactions.push({
-                        type: 'Duel Completed',
+                        type: 'Duel Completion',
                         typeClass: 'duel-completed',
+                        status: 'Completed',
                         transactionHash: event.transactionHash,
                         blockNumber: event.blockNumber,
                         winner: event.args.winner,
@@ -914,36 +914,24 @@ class CambriaWeb3 {
                         totalWinnings: parseFloat(ethers.utils.formatEther(event.args.totalWinnings)),
                         fee: parseFloat(ethers.utils.formatEther(event.args.fee)),
                         duelId: event.args.duelId.toString(),
-                        description: `Duel completed - Winner: ${this.formatAddress(event.args.winner)} (claimProceeds)`
+                        description: `Duel completed - Winner: ${this.formatAddress(event.args.winner)}`,
+                        functionName: 'claimProceeds'
                     });
                 }
                 
-                // Process DuelNullified events (nullifyBattle)
+                // Box 3b: Duel Cancellation (nullifyBattle) → Status: Cancelled
                 for (const event of duelNullifiedEvents) {
                     transactions.push({
-                        type: 'Duel Nullified',
+                        type: 'Duel Cancellation',
                         typeClass: 'duel-nullified',
+                        status: 'Cancelled',
                         transactionHash: event.transactionHash,
                         blockNumber: event.blockNumber,
                         player: event.args.player,
                         refundAmount: parseFloat(ethers.utils.formatEther(event.args.refundAmount)),
                         duelId: event.args.duelId.toString(),
-                        description: `Duel nullified by ${this.formatAddress(event.args.player)} - Refund: ${parseFloat(ethers.utils.formatEther(event.args.refundAmount)).toFixed(4)} ETH (nullifyBattle)`
-                    });
-                }
-                
-                // Process ProceedsClaimed events (claimProceeds)
-                for (const event of proceedsClaimedEvents) {
-                    transactions.push({
-                        type: 'Proceeds Claimed',
-                        typeClass: 'proceeds-claimed',
-                        transactionHash: event.transactionHash,
-                        blockNumber: event.blockNumber,
-                        winner: event.args.winner,
-                        amount: parseFloat(ethers.utils.formatEther(event.args.amount)),
-                        fee: parseFloat(ethers.utils.formatEther(event.args.fee)),
-                        duelId: event.args.duelId.toString(),
-                        description: `Proceeds claimed by winner ${this.formatAddress(event.args.winner)} - Amount: ${parseFloat(ethers.utils.formatEther(event.args.amount)).toFixed(4)} ETH, Fee: ${parseFloat(ethers.utils.formatEther(event.args.fee)).toFixed(4)} ETH`
+                        description: `Duel cancelled by ${this.formatAddress(event.args.player)} - Refund: ${parseFloat(ethers.utils.formatEther(event.args.refundAmount)).toFixed(4)} ETH`,
+                        functionName: 'nullifyBattle'
                     });
                 }
 
