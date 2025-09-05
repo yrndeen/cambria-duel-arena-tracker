@@ -487,6 +487,63 @@ class CambriaWeb3 {
         }
     }
 
+    // Get recent duel activity using contract's getBattle method
+    async getRecentDuelActivityFromContract(limit = 20) {
+        try {
+            if (!this.isConnected) {
+                throw new Error('Web3 not connected');
+            }
+
+            // Get the next battle ID to know how many battles exist
+            const nextBattleId = await this.getNextBattleId();
+            const totalBattles = parseInt(nextBattleId) - 1; // nextBattleId is 1-indexed
+            
+            if (totalBattles <= 0) {
+                return []; // No battles exist yet
+            }
+
+            // Get recent battles starting from the latest
+            const startId = Math.max(1, totalBattles - limit + 1);
+            const endId = totalBattles;
+            
+            const duels = [];
+            
+            // Fetch battles in parallel
+            const battlePromises = [];
+            for (let i = startId; i <= endId; i++) {
+                battlePromises.push(this.getBattle(i));
+            }
+            
+            const battles = await Promise.all(battlePromises);
+            
+            // Process each battle
+            for (const battle of battles) {
+                if (battle && battle.player1 !== '0x0000000000000000000000000000000000000000') {
+                    duels.push({
+                        id: battle.battleId,
+                        player1: battle.player1,
+                        player2: battle.player2,
+                        wager: battle.wager,
+                        status: battle.status,
+                        createdAt: battle.createdAt,
+                        winner: null,
+                        loser: null,
+                        netProfit: 0
+                    });
+                }
+            }
+            
+            // Sort by creation time (newest first)
+            duels.sort((a, b) => parseInt(b.createdAt) - parseInt(a.createdAt));
+            
+            return duels.slice(0, limit);
+            
+        } catch (error) {
+            console.error('Error fetching recent duel activity from contract:', error);
+            return [];
+        }
+    }
+
     // Get recent duel activity (live feed) with correct duel flow tracking
     async getRecentDuelActivity(limit = 20) {
         try {
@@ -527,6 +584,20 @@ class CambriaWeb3 {
             // Fall back to direct contract call if API server is not available or fails
             if (!this.isConnected) {
                 throw new Error('Web3 not connected');
+            }
+
+            // Try the new contract method first
+            try {
+                console.log(`Fetching live feed using contract's getBattle method (limit ${limit})`);
+                const contractResult = await this.getRecentDuelActivityFromContract(limit);
+                
+                if (contractResult && contractResult.length > 0) {
+                    // Cache the result
+                    this.setCachedData('liveFeed', cacheKey, contractResult);
+                    return contractResult;
+                }
+            } catch (contractError) {
+                console.log('Contract method failed, falling back to event-based method:', contractError);
             }
 
             try {
@@ -681,6 +752,55 @@ class CambriaWeb3 {
     // Generate wallet link for Abstract L2
     generateWalletLink(walletAddress) {
         return `${CONFIG.EXPLORER_URL}/address/${walletAddress}`;
+    }
+
+    // Get battle information by ID
+    async getBattle(battleId) {
+        try {
+            if (!this.isConnected) {
+                throw new Error('Web3 not connected');
+            }
+
+            const battleInfo = await this.contracts.duelArenaBattle.getBattle(battleId);
+            
+            return {
+                battleId: battleId.toString(),
+                player1: battleInfo.player1,
+                player2: battleInfo.player2,
+                wager: parseFloat(ethers.utils.formatEther(battleInfo.wager)),
+                status: this.getStatusFromNumber(battleInfo.status),
+                createdAt: battleInfo.createdAt.toString()
+            };
+        } catch (error) {
+            console.error('Error fetching battle info:', error);
+            throw error;
+        }
+    }
+
+    // Get next battle ID
+    async getNextBattleId() {
+        try {
+            if (!this.isConnected) {
+                throw new Error('Web3 not connected');
+            }
+
+            const nextId = await this.contracts.duelArenaBattle.nextBattleId();
+            return nextId.toString();
+        } catch (error) {
+            console.error('Error fetching next battle ID:', error);
+            throw error;
+        }
+    }
+
+    // Convert status number to string
+    getStatusFromNumber(statusNumber) {
+        switch (statusNumber) {
+            case 0: return 'pending';
+            case 1: return 'active';
+            case 2: return 'completed';
+            case 3: return 'cancelled';
+            default: return 'unknown';
+        }
     }
     
     // Cache management methods
@@ -888,6 +1008,15 @@ class CambriaWeb3 {
                 
                 // Box 2: Duel Joining (joinBattle) → Status: Active
                 for (const event of duelJoinedEvents) {
+                    // Get wager info from the battle data
+                    let wager = 0;
+                    try {
+                        const battleInfo = await this.getBattle(event.args.duelId);
+                        wager = battleInfo.wager;
+                    } catch (error) {
+                        console.log('Could not fetch wager for duel joining event:', error);
+                    }
+
                     transactions.push({
                         type: 'Duel Joining',
                         typeClass: 'duel-joined',
@@ -895,6 +1024,7 @@ class CambriaWeb3 {
                         transactionHash: event.transactionHash,
                         blockNumber: event.blockNumber,
                         player2: event.args.player2,
+                        wager: wager,
                         duelId: event.args.duelId.toString(),
                         description: `Player ${this.formatAddress(event.args.player2)} joined the duel`,
                         functionName: 'joinBattle'

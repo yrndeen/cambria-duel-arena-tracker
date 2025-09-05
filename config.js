@@ -29,6 +29,8 @@ const CONFIG = {
             "function joinBattle(uint256 duelId) external payable", // 11. Player2 accepts
             "function nullifyBattle(uint256 duelId) external", // 12. Cancel and refund
             "function claimProceeds(uint256 duelId) external", // 5. Winner claims
+            "function getBattle(uint256 battleId) external view returns (address player1, address player2, uint256 wager, uint8 status, uint256 createdAt)", // 6. Get battle info
+            "function nextBattleId() external view returns (uint256)", // 9. Get next battle ID
             "function getDuelInfo(uint256 duelId) external view returns (address player1, address player2, uint256 wager, uint8 status, uint256 createdAt)",
             "function getPlayerStats(address player) external view returns (uint256 totalDuels, uint256 wins, uint256 totalWagered, uint256 totalProfit)"
         ],

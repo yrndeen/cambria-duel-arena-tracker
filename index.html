@@ -2079,6 +2079,8 @@ function getMockDuelTransactions(duelId) {
             transactionHash: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
             blockNumber: 12345679,
             player2: '0xcf89d1e0a43e2fedcba0987654321fedcba0987',
+            wager: 0.050,
+            duelId: '7821',
             description: 'Player 0xcf89d1...a43e2 joined the duel',
             functionName: 'joinBattle'
         },
@@ -2125,6 +2127,10 @@ function displayTransactions(transactions) {
             </div>
             <div class="transaction-details">
                 <div class="transaction-detail">
+                    <div class="transaction-detail-label">Duel ID</div>
+                    <div class="transaction-detail-value">#${box1.duelId}</div>
+                </div>
+                <div class="transaction-detail">
                     <div class="transaction-detail-label">Player 1</div>
                     <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(box1.player1)}</div>
                 </div>
@@ -2165,8 +2171,16 @@ function displayTransactions(transactions) {
             </div>
             <div class="transaction-details">
                 <div class="transaction-detail">
+                    <div class="transaction-detail-label">Duel ID</div>
+                    <div class="transaction-detail-value">#${box2.duelId}</div>
+                </div>
+                <div class="transaction-detail">
                     <div class="transaction-detail-label">Player 2</div>
                     <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(box2.player2)}</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Wager Amount</div>
+                    <div class="transaction-detail-value">${box2.wager.toFixed(3)} ETH</div>
                 </div>
                 <div class="transaction-detail">
                     <div class="transaction-detail-label">Function</div>
