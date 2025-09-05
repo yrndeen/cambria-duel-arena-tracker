@@ -17,15 +17,19 @@ const CONFIG = {
     // Contract ABIs (simplified for key functions)
     ABIS: {
         DUEL_ARENA_BATTLE: [
-            // Events
-            "event DuelStarted(uint256 indexed duelId, address indexed player1, address indexed player2, uint256 wager)",
+            // Events - Based on actual contract functions
+            "event DuelInitiated(uint256 indexed duelId, address indexed player1, address indexed player2, uint256 wager)",
+            "event DuelJoined(uint256 indexed duelId, address indexed player2)",
             "event DuelCompleted(uint256 indexed duelId, address indexed winner, address indexed loser, uint256 totalWinnings, uint256 fee)",
-            "event WagerDeposited(uint256 indexed duelId, address indexed player, uint256 amount)",
+            "event DuelNullified(uint256 indexed duelId, address indexed player, uint256 refundAmount)",
+            "event ProceedsClaimed(uint256 indexed duelId, address indexed winner, uint256 amount, uint256 fee)",
             
-            // Functions
-            "function startDuel(address opponent, uint256 wager) external payable",
-            "function depositWager(uint256 duelId) external payable",
-            "function getDuelInfo(uint256 duelId) external view returns (address player1, address player2, uint256 wager, uint8 status)",
+            // Functions - Based on actual contract
+            "function initBattle(address opponent, uint256 wager) external payable", // 10. Player1 hosts
+            "function joinBattle(uint256 duelId) external payable", // 11. Player2 accepts
+            "function nullifyBattle(uint256 duelId) external", // 12. Cancel and refund
+            "function claimProceeds(uint256 duelId) external", // 5. Winner claims
+            "function getDuelInfo(uint256 duelId) external view returns (address player1, address player2, uint256 wager, uint8 status, uint256 createdAt)",
             "function getPlayerStats(address player) external view returns (uint256 totalDuels, uint256 wins, uint256 totalWagered, uint256 totalProfit)"
         ],
         
@@ -45,7 +49,7 @@ const CONFIG = {
     
     // Fee Configuration
     FEE_CONFIG: {
-        PLATFORM_FEE_PERCENT: 10, // 10% fee on total winnings
+        PLATFORM_FEE_PERCENT: 5, // 5% fee on total winnings
         FEE_DECIMALS: 2
     },
     

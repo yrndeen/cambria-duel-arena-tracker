@@ -288,60 +288,89 @@ class CambriaWeb3 {
                 
                 console.log(`Querying blocks ${startBlock} to ${endBlock} for wallet ${walletAddress}`);
                 
-                // Batch queries for better performance
+                // Query all relevant events for this wallet
                 const [
-                    duelStartedEventsAsPlayer1,
-                    duelStartedEventsAsPlayer2
+                    duelInitiatedAsPlayer1,
+                    duelInitiatedAsPlayer2,
+                    duelJoinedEvents,
+                    duelCompletedEvents,
+                    duelNullifiedEvents,
+                    proceedsClaimedEvents
                 ] = await Promise.all([
-                    // Query past DuelStarted events for this wallet as player1
+                    // Query DuelInitiated events for this wallet as player1
                     this.contracts.duelArenaBattle.queryFilter(
-                        this.contracts.duelArenaBattle.filters.DuelStarted(null, walletAddress),
+                        this.contracts.duelArenaBattle.filters.DuelInitiated(null, walletAddress),
                         startBlock,
                         endBlock
                     ),
-                    // Also check if wallet was player2
+                    // Query DuelInitiated events for this wallet as player2
                     this.contracts.duelArenaBattle.queryFilter(
-                        this.contracts.duelArenaBattle.filters.DuelStarted(walletAddress, null),
+                        this.contracts.duelArenaBattle.filters.DuelInitiated(walletAddress, null),
+                        startBlock,
+                        endBlock
+                    ),
+                    // Query DuelJoined events
+                    this.contracts.duelArenaBattle.queryFilter(
+                        this.contracts.duelArenaBattle.filters.DuelJoined(),
+                        startBlock,
+                        endBlock
+                    ),
+                    // Query DuelCompleted events
+                    this.contracts.duelArenaBattle.queryFilter(
+                        this.contracts.duelArenaBattle.filters.DuelCompleted(),
+                        startBlock,
+                        endBlock
+                    ),
+                    // Query DuelNullified events
+                    this.contracts.duelArenaBattle.queryFilter(
+                        this.contracts.duelArenaBattle.filters.DuelNullified(),
+                        startBlock,
+                        endBlock
+                    ),
+                    // Query ProceedsClaimed events
+                    this.contracts.duelArenaBattle.queryFilter(
+                        this.contracts.duelArenaBattle.filters.ProceedsClaimed(),
                         startBlock,
                         endBlock
                     )
                 ]);
                 
-                // Combine and process events
-                const allEvents = [...duelStartedEventsAsPlayer1, ...duelStartedEventsAsPlayer2];
+                // Combine all initiated duels
+                const allInitiatedEvents = [...duelInitiatedAsPlayer1, ...duelInitiatedAsPlayer2];
                 
                 // If no events found, return empty array
-                if (allEvents.length === 0) {
+                if (allInitiatedEvents.length === 0) {
                     // Cache the empty result too
                     this.setCachedData('duelHistory', cacheKey, { duels: [], hasMore: false });
                     return { duels: [], hasMore: false };
                 }
                 
-                // Sort events by block number (newest first) and limit
-                allEvents.sort((a, b) => b.blockNumber - a.blockNumber);
-                const paginatedEvents = allEvents.slice(0, limit);
-                const hasMore = allEvents.length > limit;
+                // Create maps for quick lookup
+                const joinedByDuelId = {};
+                const completedByDuelId = {};
+                const nullifiedByDuelId = {};
+                const claimedByDuelId = {};
                 
-                // Prepare duel IDs for batch query
-                const duelIds = paginatedEvents.map(event => event.args.duelId.toString());
-                
-                // Batch query for completed duels
-                const completedEventsPromises = duelIds.map(duelId => 
-                    this.contracts.duelArenaBattle.queryFilter(
-                        this.contracts.duelArenaBattle.filters.DuelCompleted(duelId)
-                    )
-                );
-                
-                // Wait for all queries to complete
-                const completedEventsResults = await Promise.all(completedEventsPromises);
-                
-                // Map completed events by duel ID for quick lookup
-                const completedEventsByDuelId = {};
-                completedEventsResults.forEach((events, index) => {
-                    if (events.length > 0) {
-                        completedEventsByDuelId[duelIds[index]] = events[0];
-                    }
+                duelJoinedEvents.forEach(event => {
+                    joinedByDuelId[event.args.duelId.toString()] = event;
                 });
+                
+                duelCompletedEvents.forEach(event => {
+                    completedByDuelId[event.args.duelId.toString()] = event;
+                });
+                
+                duelNullifiedEvents.forEach(event => {
+                    nullifiedByDuelId[event.args.duelId.toString()] = event;
+                });
+                
+                proceedsClaimedEvents.forEach(event => {
+                    claimedByDuelId[event.args.duelId.toString()] = event;
+                });
+                
+                // Sort events by block number (newest first) and limit
+                allInitiatedEvents.sort((a, b) => b.blockNumber - a.blockNumber);
+                const paginatedEvents = allInitiatedEvents.slice(0, limit);
+                const hasMore = allInitiatedEvents.length > limit;
                 
                 const duels = [];
                 
@@ -355,21 +384,35 @@ class CambriaWeb3 {
                     let winner = null;
                     let loser = null;
                     let netProfit = 0;
-                    let status = 'pending';
+                    let status = 'pending'; // Default status after initBattle
                     let transactionHash = event.transactionHash;
                     
-                    // Check if we have a completed event for this duel
-                    const completedEvent = completedEventsByDuelId[duelId];
-                    if (completedEvent) {
-                        winner = completedEvent.args.winner;
-                        loser = completedEvent.args.loser;
-                        status = 'completed';
+                    // Check duel progression
+                    if (nullifiedByDuelId[duelId]) {
+                        // Duel was nullified (cancelled)
+                        status = 'cancelled';
+                        const nullifyEvent = nullifiedByDuelId[duelId];
+                        transactionHash = nullifyEvent.transactionHash;
+                    } else if (joinedByDuelId[duelId]) {
+                        // Duel was joined (active)
+                        status = 'active';
+                        const joinEvent = joinedByDuelId[duelId];
+                        transactionHash = joinEvent.transactionHash;
                         
-                        // Calculate net profit (after 5% fee)
-                        if (winner.toLowerCase() === walletAddress.toLowerCase()) {
-                            netProfit = wager * 1.9; // 2 * wager - 0.1 * wager (5% fee on total winnings)
-                        } else {
-                            netProfit = -wager; // Lost the wager
+                        // Check if completed
+                        if (completedByDuelId[duelId]) {
+                            status = 'completed';
+                            const completedEvent = completedByDuelId[duelId];
+                            winner = completedEvent.args.winner;
+                            loser = completedEvent.args.loser;
+                            transactionHash = completedEvent.transactionHash;
+                            
+                            // Calculate net profit (after 5% fee)
+                            if (winner.toLowerCase() === walletAddress.toLowerCase()) {
+                                netProfit = wager * 1.9; // 2 * wager - 0.1 * wager (5% fee on total winnings)
+                            } else {
+                                netProfit = -wager; // Lost the wager
+                            }
                         }
                     }
                     
@@ -444,7 +487,7 @@ class CambriaWeb3 {
         }
     }
 
-    // Get recent duel activity (live feed) with optimized batching from API server or blockchain
+    // Get recent duel activity (live feed) with correct duel flow tracking
     async getRecentDuelActivity(limit = 20) {
         try {
             // Check cache first
@@ -491,59 +534,110 @@ class CambriaWeb3 {
                 const latestBlock = await this.provider.getBlockNumber();
                 const fromBlock = Math.max(0, latestBlock - 10000); // Last 10k blocks for recent activity
                 
-                // Get recent DuelStarted events
-                const duelStartedFilter = this.contracts.duelArenaBattle.filters.DuelStarted();
-                const duelStartedEvents = await this.contracts.duelArenaBattle.queryFilter(duelStartedFilter, fromBlock, latestBlock);
-                
-                if (duelStartedEvents.length === 0) {
-                    this.setCachedData('liveFeed', cacheKey, []);
-                    return []; // No duels found
-                }
-                
-                // Sort events by block number (newest first) and limit
-                duelStartedEvents.sort((a, b) => b.blockNumber - a.blockNumber);
-                const recentEvents = duelStartedEvents.slice(0, limit);
-                
-                // Prepare duel IDs for batch query
-                const duelIds = recentEvents.map(event => event.args.duelId.toString());
-                
-                // Batch query for completed duels
-                const completedEventsPromises = duelIds.map(duelId => 
+                // Get all relevant events in parallel
+                const [
+                    duelInitiatedEvents,
+                    duelJoinedEvents,
+                    duelCompletedEvents,
+                    duelNullifiedEvents,
+                    proceedsClaimedEvents
+                ] = await Promise.all([
+                    // 1. DuelInitiated events (initBattle function)
                     this.contracts.duelArenaBattle.queryFilter(
-                        this.contracts.duelArenaBattle.filters.DuelCompleted(duelId)
+                        this.contracts.duelArenaBattle.filters.DuelInitiated(),
+                        fromBlock,
+                        latestBlock
+                    ),
+                    // 2. DuelJoined events (joinBattle function)
+                    this.contracts.duelArenaBattle.queryFilter(
+                        this.contracts.duelArenaBattle.filters.DuelJoined(),
+                        fromBlock,
+                        latestBlock
+                    ),
+                    // 3. DuelCompleted events (claimProceeds function)
+                    this.contracts.duelArenaBattle.queryFilter(
+                        this.contracts.duelArenaBattle.filters.DuelCompleted(),
+                        fromBlock,
+                        latestBlock
+                    ),
+                    // 4. DuelNullified events (nullifyBattle function)
+                    this.contracts.duelArenaBattle.queryFilter(
+                        this.contracts.duelArenaBattle.filters.DuelNullified(),
+                        fromBlock,
+                        latestBlock
+                    ),
+                    // 5. ProceedsClaimed events (claimProceeds function)
+                    this.contracts.duelArenaBattle.queryFilter(
+                        this.contracts.duelArenaBattle.filters.ProceedsClaimed(),
+                        fromBlock,
+                        latestBlock
                     )
-                );
+                ]);
                 
-                // Wait for all queries to complete
-                const completedEventsResults = await Promise.all(completedEventsPromises);
+                // Create maps for quick lookup
+                const joinedByDuelId = {};
+                const completedByDuelId = {};
+                const nullifiedByDuelId = {};
+                const claimedByDuelId = {};
                 
-                // Map completed events by duel ID for quick lookup
-                const completedEventsByDuelId = {};
-                completedEventsResults.forEach((events, index) => {
-                    if (events.length > 0) {
-                        completedEventsByDuelId[duelIds[index]] = events[0];
-                    }
+                duelJoinedEvents.forEach(event => {
+                    joinedByDuelId[event.args.duelId.toString()] = event;
                 });
                 
+                duelCompletedEvents.forEach(event => {
+                    completedByDuelId[event.args.duelId.toString()] = event;
+                });
+                
+                duelNullifiedEvents.forEach(event => {
+                    nullifiedByDuelId[event.args.duelId.toString()] = event;
+                });
+                
+                claimedByDuelId.forEach(event => {
+                    claimedByDuelId[event.args.duelId.toString()] = event;
+                });
+                
+                // Process all initiated duels
                 const duels = [];
                 
-                for (const event of recentEvents) {
+                for (const event of duelInitiatedEvents) {
                     const duelId = event.args.duelId.toString();
                     const player1 = event.args.player1;
                     const player2 = event.args.player2;
                     const wager = parseFloat(ethers.utils.formatEther(event.args.wager));
                     
+                    let status = 'pending'; // Default status after initBattle
                     let winner = null;
                     let loser = null;
-                    let status = 'pending';
+                    let netProfit = 0;
                     let transactionHash = event.transactionHash;
                     
-                    // Check if we have a completed event for this duel
-                    const completedEvent = completedEventsByDuelId[duelId];
-                    if (completedEvent) {
-                        winner = completedEvent.args.winner;
-                        loser = completedEvent.args.loser;
-                        status = 'completed';
+                    // Check duel progression
+                    if (nullifiedByDuelId[duelId]) {
+                        // Duel was nullified (cancelled)
+                        status = 'cancelled';
+                        const nullifyEvent = nullifiedByDuelId[duelId];
+                        transactionHash = nullifyEvent.transactionHash;
+                    } else if (joinedByDuelId[duelId]) {
+                        // Duel was joined (active)
+                        status = 'active';
+                        const joinEvent = joinedByDuelId[duelId];
+                        transactionHash = joinEvent.transactionHash;
+                        
+                        // Check if completed
+                        if (completedByDuelId[duelId]) {
+                            status = 'completed';
+                            const completedEvent = completedByDuelId[duelId];
+                            winner = completedEvent.args.winner;
+                            loser = completedEvent.args.loser;
+                            transactionHash = completedEvent.transactionHash;
+                            
+                            // Calculate net profit (after 5% fee)
+                            if (winner.toLowerCase() === player1.toLowerCase()) {
+                                netProfit = wager * 1.9; // 2 * wager - 0.1 * wager (5% fee on total winnings)
+                            } else if (winner.toLowerCase() === player2.toLowerCase()) {
+                                netProfit = wager * 1.9; // 2 * wager - 0.1 * wager (5% fee on total winnings)
+                            }
+                        }
                     }
                     
                     duels.push({
@@ -554,16 +648,21 @@ class CambriaWeb3 {
                         winner,
                         loser,
                         status,
+                        netProfit,
                         timestamp: event.blockNumber,
                         transactionHash,
                         blockNumber: event.blockNumber
                     });
                 }
                 
-                // Cache the result
-                this.setCachedData('liveFeed', cacheKey, duels);
+                // Sort by block number (newest first) and limit
+                duels.sort((a, b) => b.blockNumber - a.blockNumber);
+                const recentDuels = duels.slice(0, limit);
                 
-                return duels;
+                // Cache the result
+                this.setCachedData('liveFeed', cacheKey, recentDuels);
+                
+                return recentDuels;
             } catch (contractError) {
                 console.error('Error fetching duel activity from contract:', contractError);
                 return []; // Return empty array if there's an error
@@ -742,64 +841,68 @@ class CambriaWeb3 {
             }
 
             try {
-                // Batch all event queries in parallel
+                // Batch all event queries in parallel for correct duel flow
                 const [
-                    duelStartedEvents,
-                    wagerDepositedEvents,
+                    duelInitiatedEvents,
+                    duelJoinedEvents,
                     duelCompletedEvents,
-                    fundsReleasedEvents
+                    duelNullifiedEvents,
+                    proceedsClaimedEvents
                 ] = await Promise.all([
-                    // Get DuelStarted event
+                    // Get DuelInitiated event (initBattle function)
                     this.contracts.duelArenaBattle.queryFilter(
-                        this.contracts.duelArenaBattle.filters.DuelStarted(duelId)
+                        this.contracts.duelArenaBattle.filters.DuelInitiated(duelId)
                     ),
-                    // Get WagerDeposited events
+                    // Get DuelJoined event (joinBattle function)
                     this.contracts.duelArenaBattle.queryFilter(
-                        this.contracts.duelArenaBattle.filters.WagerDeposited(duelId)
+                        this.contracts.duelArenaBattle.filters.DuelJoined(duelId)
                     ),
-                    // Get DuelCompleted event
+                    // Get DuelCompleted event (claimProceeds function)
                     this.contracts.duelArenaBattle.queryFilter(
                         this.contracts.duelArenaBattle.filters.DuelCompleted(duelId)
                     ),
-                    // Get FundsReleased events
-                    this.contracts.duelArenaEscrow.queryFilter(
-                        this.contracts.duelArenaEscrow.filters.FundsReleased(duelId)
+                    // Get DuelNullified event (nullifyBattle function)
+                    this.contracts.duelArenaBattle.queryFilter(
+                        this.contracts.duelArenaBattle.filters.DuelNullified(duelId)
+                    ),
+                    // Get ProceedsClaimed event (claimProceeds function)
+                    this.contracts.duelArenaBattle.queryFilter(
+                        this.contracts.duelArenaBattle.filters.ProceedsClaimed(duelId)
                     )
                 ]);
                 
                 // Process all events into transactions array
                 const transactions = [];
                 
-                // Process DuelStarted events
-                for (const event of duelStartedEvents) {
+                // Process DuelInitiated events (initBattle)
+                for (const event of duelInitiatedEvents) {
                     transactions.push({
-                        type: 'Duel Started',
-                        typeClass: 'join-battle',
+                        type: 'Duel Initiated',
+                        typeClass: 'duel-initiated',
                         transactionHash: event.transactionHash,
                         blockNumber: event.blockNumber,
                         player1: event.args.player1,
                         player2: event.args.player2,
                         wager: parseFloat(ethers.utils.formatEther(event.args.wager)),
                         duelId: event.args.duelId.toString(),
-                        description: 'Duel initiated between players'
+                        description: `Player ${this.formatAddress(event.args.player1)} initiated duel with ${this.formatAddress(event.args.player2)} (initBattle)`
                     });
                 }
                 
-                // Process WagerDeposited events
-                for (const event of wagerDepositedEvents) {
+                // Process DuelJoined events (joinBattle)
+                for (const event of duelJoinedEvents) {
                     transactions.push({
-                        type: 'Wager Deposited',
-                        typeClass: 'join-battle',
+                        type: 'Duel Joined',
+                        typeClass: 'duel-joined',
                         transactionHash: event.transactionHash,
                         blockNumber: event.blockNumber,
-                        player: event.args.player,
-                        amount: parseFloat(ethers.utils.formatEther(event.args.amount)),
+                        player2: event.args.player2,
                         duelId: event.args.duelId.toString(),
-                        description: `Player ${this.formatAddress(event.args.player)} deposited wager`
+                        description: `Player ${this.formatAddress(event.args.player2)} joined the duel (joinBattle)`
                     });
                 }
                 
-                // Process DuelCompleted events
+                // Process DuelCompleted events (claimProceeds)
                 for (const event of duelCompletedEvents) {
                     transactions.push({
                         type: 'Duel Completed',
@@ -811,22 +914,36 @@ class CambriaWeb3 {
                         totalWinnings: parseFloat(ethers.utils.formatEther(event.args.totalWinnings)),
                         fee: parseFloat(ethers.utils.formatEther(event.args.fee)),
                         duelId: event.args.duelId.toString(),
-                        description: `Duel completed - Winner: ${this.formatAddress(event.args.winner)}`
+                        description: `Duel completed - Winner: ${this.formatAddress(event.args.winner)} (claimProceeds)`
                     });
                 }
                 
-                // Process FundsReleased events
-                for (const event of fundsReleasedEvents) {
+                // Process DuelNullified events (nullifyBattle)
+                for (const event of duelNullifiedEvents) {
                     transactions.push({
-                        type: 'Funds Released',
-                        typeClass: 'funds-released',
+                        type: 'Duel Nullified',
+                        typeClass: 'duel-nullified',
+                        transactionHash: event.transactionHash,
+                        blockNumber: event.blockNumber,
+                        player: event.args.player,
+                        refundAmount: parseFloat(ethers.utils.formatEther(event.args.refundAmount)),
+                        duelId: event.args.duelId.toString(),
+                        description: `Duel nullified by ${this.formatAddress(event.args.player)} - Refund: ${parseFloat(ethers.utils.formatEther(event.args.refundAmount)).toFixed(4)} ETH (nullifyBattle)`
+                    });
+                }
+                
+                // Process ProceedsClaimed events (claimProceeds)
+                for (const event of proceedsClaimedEvents) {
+                    transactions.push({
+                        type: 'Proceeds Claimed',
+                        typeClass: 'proceeds-claimed',
                         transactionHash: event.transactionHash,
                         blockNumber: event.blockNumber,
                         winner: event.args.winner,
                         amount: parseFloat(ethers.utils.formatEther(event.args.amount)),
                         fee: parseFloat(ethers.utils.formatEther(event.args.fee)),
                         duelId: event.args.duelId.toString(),
-                        description: `Funds released to winner ${this.formatAddress(event.args.winner)}`
+                        description: `Proceeds claimed by winner ${this.formatAddress(event.args.winner)} - Amount: ${parseFloat(ethers.utils.formatEther(event.args.amount)).toFixed(4)} ETH, Fee: ${parseFloat(ethers.utils.formatEther(event.args.fee)).toFixed(4)} ETH`
                     });
                 }
 
@@ -851,14 +968,29 @@ class CambriaWeb3 {
     startEventListening() {
         if (!this.isConnected) return;
 
-        // Listen for new duels
-        this.contracts.duelArenaBattle.on('DuelStarted', (duelId, player1, player2, wager) => {
-            this.handleNewDuel(duelId, player1, player2, wager);
+        // Listen for duel initiated events (initBattle)
+        this.contracts.duelArenaBattle.on('DuelInitiated', (duelId, player1, player2, wager) => {
+            this.handleDuelInitiated(duelId, player1, player2, wager);
         });
 
-        // Listen for completed duels
+        // Listen for duel joined events (joinBattle)
+        this.contracts.duelArenaBattle.on('DuelJoined', (duelId, player2) => {
+            this.handleDuelJoined(duelId, player2);
+        });
+
+        // Listen for completed duels (claimProceeds)
         this.contracts.duelArenaBattle.on('DuelCompleted', (duelId, winner, loser, totalWinnings, fee) => {
             this.handleDuelCompleted(duelId, winner, loser, totalWinnings, fee);
+        });
+
+        // Listen for nullified duels (nullifyBattle)
+        this.contracts.duelArenaBattle.on('DuelNullified', (duelId, player, refundAmount) => {
+            this.handleDuelNullified(duelId, player, refundAmount);
+        });
+
+        // Listen for proceeds claimed (claimProceeds)
+        this.contracts.duelArenaBattle.on('ProceedsClaimed', (duelId, winner, amount, fee) => {
+            this.handleProceedsClaimed(duelId, winner, amount, fee);
         });
     }
 
@@ -869,9 +1001,9 @@ class CambriaWeb3 {
         }
     }
 
-    // Handle new duel event
-    handleNewDuel(duelId, player1, player2, wager) {
-        console.log('New duel started:', { duelId, player1, player2, wager });
+    // Handle duel initiated event (initBattle)
+    handleDuelInitiated(duelId, player1, player2, wager) {
+        console.log('Duel initiated:', { duelId, player1, player2, wager });
         
         // Invalidate relevant caches
         this.invalidateCache('liveFeed');
@@ -879,15 +1011,31 @@ class CambriaWeb3 {
         this.invalidateCache('duelHistory', player2);
         
         // Trigger UI updates
-        this.dispatchEvent('duelStarted', {
+        this.dispatchEvent('duelInitiated', {
             duelId: duelId.toString(),
             player1,
             player2,
-            wager: parseFloat(ethers.utils.formatEther(wager))
+            wager: parseFloat(ethers.utils.formatEther(wager)),
+            status: 'pending'
         });
     }
 
-    // Handle duel completion event
+    // Handle duel joined event (joinBattle)
+    handleDuelJoined(duelId, player2) {
+        console.log('Duel joined:', { duelId, player2 });
+        
+        // Invalidate relevant caches
+        this.invalidateCache('liveFeed');
+        
+        // Trigger UI updates
+        this.dispatchEvent('duelJoined', {
+            duelId: duelId.toString(),
+            player2,
+            status: 'active'
+        });
+    }
+
+    // Handle duel completion event (claimProceeds)
     handleDuelCompleted(duelId, winner, loser, totalWinnings, fee) {
         console.log('Duel completed:', { duelId, winner, loser, totalWinnings, fee });
         
@@ -910,6 +1058,42 @@ class CambriaWeb3 {
             totalWinnings: parseFloat(ethers.utils.formatEther(totalWinnings)),
             fee: parseFloat(ethers.utils.formatEther(fee)),
             netProfit
+        });
+    }
+
+    // Handle duel nullified event (nullifyBattle)
+    handleDuelNullified(duelId, player, refundAmount) {
+        console.log('Duel nullified:', { duelId, player, refundAmount });
+        
+        // Invalidate relevant caches
+        this.invalidateCache('liveFeed');
+        this.invalidateCache('duelTransactions', duelId.toString());
+        
+        // Trigger UI updates
+        this.dispatchEvent('duelNullified', {
+            duelId: duelId.toString(),
+            player,
+            refundAmount: parseFloat(ethers.utils.formatEther(refundAmount)),
+            status: 'cancelled'
+        });
+    }
+
+    // Handle proceeds claimed event (claimProceeds)
+    handleProceedsClaimed(duelId, winner, amount, fee) {
+        console.log('Proceeds claimed:', { duelId, winner, amount, fee });
+        
+        // Invalidate relevant caches
+        this.invalidateCache('liveFeed');
+        this.invalidateCache('duelHistory', winner);
+        this.invalidateCache('walletStats', winner);
+        this.invalidateCache('duelTransactions', duelId.toString());
+        
+        // Trigger UI updates
+        this.dispatchEvent('proceedsClaimed', {
+            duelId: duelId.toString(),
+            winner,
+            amount: parseFloat(ethers.utils.formatEther(amount)),
+            fee: parseFloat(ethers.utils.formatEther(fee))
         });
     }
     

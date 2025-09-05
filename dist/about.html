@@ -376,6 +376,22 @@ align-items: center;
 </section>
 
 <section class="content-section">
+<h2 class="section-title">How Duels Work</h2>
+<p>The Cambria Duel Arena follows a specific flow for each duel:</p>
+<ol style="margin-left: 20px; color: var(--text-secondary);">
+<li><strong>Duel Initiation (initBattle):</strong> Player 1 creates a duel challenge with a specific wager amount and opponent address</li>
+<li><strong>Duel Status - Pending:</strong> The duel waits for Player 2 to accept the challenge</li>
+<li><strong>Duel Joining (joinBattle):</strong> Player 2 accepts the duel by calling joinBattle with the same wager amount</li>
+<li><strong>Duel Status - Active:</strong> Both players have committed their wagers and the duel is in progress</li>
+<li><strong>Duel Completion (claimProceeds):</strong> The winner claims both wagers minus the platform fee</li>
+<li><strong>Duel Status - Completed:</strong> The duel is finished and funds have been distributed</li>
+<li><strong>Duel Cancellation (nullifyBattle):</strong> Either player can cancel a pending duel to get their wager refunded</li>
+<li><strong>Duel Status - Cancelled:</strong> The duel was cancelled and players received refunds</li>
+</ol>
+<p>Our platform tracks all these events in real-time, showing you the current status of each duel and providing detailed transaction history.</p>
+</section>
+
+<section class="content-section">
 <h2 class="section-title">Duel Arena Fee Structure</h2>
 <p>The Cambria Duel Arena operates on a simple but important fee structure that affects all profit calculations:</p>
 <ul style="margin-left: 20px; color: var(--text-secondary);">

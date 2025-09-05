@@ -607,8 +607,33 @@ transition: transform 0.3s;
     font-weight: 500;
 }
 
+.status-active {
+    color: #00b4d8;
+    font-weight: 500;
+}
+
 .status-completed {
     color: var(--success);
+    font-weight: 500;
+}
+
+.status-cancelled {
+    color: var(--danger);
+    font-weight: 500;
+}
+
+.cancelled {
+    color: var(--danger);
+    font-weight: 500;
+}
+
+.active {
+    color: #00b4d8;
+    font-weight: 500;
+}
+
+.pending {
+    color: #ff8c00;
     font-weight: 500;
 }
 
@@ -1607,6 +1632,34 @@ function updateDuelHistory(duels) {
         const player2Link = `<a href="javascript:void(0);" onclick="searchWallet('${duel.player2}')" class="wallet-link">${window.cambriaWeb3.formatAddress(duel.player2)}</a>`;
         const txButton = `<button class="tx-link" onclick="showDuelModal('${duel.id}', '${duel.player1}', '${duel.player2}', ${duel.wager})">View TX</button>`;
         
+        let resultClass = '';
+        let resultText = '';
+        let profitText = '';
+        
+        if (duel.status === 'completed') {
+            if (duel.winner === duel.currentPlayer) {
+                resultClass = 'profit';
+                resultText = 'Win';
+                profitText = `+${duel.netProfit.toFixed(3)} ETH`;
+            } else {
+                resultClass = 'loss';
+                resultText = 'Loss';
+                profitText = `-${duel.wager.toFixed(3)} ETH`;
+            }
+        } else if (duel.status === 'cancelled') {
+            resultClass = 'cancelled';
+            resultText = 'Cancelled';
+            profitText = 'Refunded';
+        } else if (duel.status === 'active') {
+            resultClass = 'active';
+            resultText = 'In Progress';
+            profitText = '-';
+        } else if (duel.status === 'pending') {
+            resultClass = 'pending';
+            resultText = 'Pending';
+            profitText = '-';
+        }
+        
         row.innerHTML = `
             <td>#${duel.id}</td>
             <td>
@@ -1615,8 +1668,8 @@ function updateDuelHistory(duels) {
                 <span class="${duel.winner !== duel.currentPlayer ? 'winner' : 'loser'}">${player2Link}</span>
             </td>
             <td>${duel.wager.toFixed(3)} ETH</td>
-            <td class="${duel.winner === duel.currentPlayer ? 'profit' : 'loss'}">${duel.winner === duel.currentPlayer ? 'Win' : 'Loss'}</td>
-            <td class="${duel.netProfit >= 0 ? 'profit' : 'loss'}">${duel.netProfit >= 0 ? '+' : ''}${duel.netProfit.toFixed(3)} ETH</td>
+            <td class="${resultClass}">${resultText}</td>
+            <td class="${duel.netProfit >= 0 ? 'profit' : 'loss'}">${profitText}</td>
             <td>${txButton}</td>
         `;
         tbody.appendChild(row);
@@ -1815,6 +1868,12 @@ function updateLiveFeed(duels) {
         if (duel.status === 'completed') {
             const winnerLink = `<a href="javascript:void(0);" onclick="searchWallet('${duel.winner}')" class="wallet-link result-winner">${window.cambriaWeb3.formatAddress(duel.winner)}</a>`;
             resultHtml = `Winner: ${winnerLink}`;
+        } else if (duel.status === 'cancelled') {
+            resultHtml = 'Cancelled';
+        } else if (duel.status === 'active') {
+            resultHtml = 'In Progress';
+        } else if (duel.status === 'pending') {
+            resultHtml = 'Waiting for Player 2';
         }
         
         row.innerHTML = `
