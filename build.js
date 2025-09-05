@@ -20,6 +20,7 @@ const filesToCopy = [
     'leaderboard.html', 
     'statistics.html',
     'about.html',
+    'donate.html',
     'config.js',
     'web3-utils.js',
     'README.md'

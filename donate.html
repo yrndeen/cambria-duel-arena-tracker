@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donate - Cambria Duel Arena Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6a3d9a;
+            --primary-light: #8b5fb8;
+            --primary-dark: #4a2c6b;
+            --secondary: #00b4d8;
+            --secondary-light: #33c4e0;
+            --secondary-dark: #0099b8;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --dark: #0a0a0a;
+            --dark-light: #1a1a1a;
+            --dark-lighter: #2a2a2a;
+            --text: #ffffff;
+            --text-secondary: #b0b0b0;
+            --text-muted: #808080;
+            --border: #333333;
+            --shadow: rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--dark) 0%, var(--dark-light) 100%);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            padding: 20px 0;
+            box-shadow: 0 4px 20px var(--shadow);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--text);
+        }
+
+        .logo-icon {
+            font-size: 28px;
+            margin-right: 10px;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+
+        nav a {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        nav a:hover {
+            color: var(--secondary);
+        }
+
+        nav a.active {
+            color: var(--secondary);
+        }
+
+        nav a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--secondary);
+        }
+
+        main {
+            padding: 60px 0;
+        }
+
+        .donate-hero {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .donate-hero h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 48px;
+            font-weight: 900;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .donate-hero p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .donate-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 60px;
+        }
+
+        .donate-info {
+            background: var(--dark-light);
+            padding: 40px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .donate-info h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: var(--secondary);
+        }
+
+        .donate-info p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            line-height: 1.8;
+        }
+
+        .donate-address {
+            background: var(--dark-lighter);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin: 20px 0;
+        }
+
+        .address-label {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .address-value {
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            color: var(--text);
+            word-break: break-all;
+            margin-bottom: 15px;
+        }
+
+        .copy-address-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .copy-address-btn:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        .copy-address-btn.copied {
+            background: var(--success);
+        }
+
+        .donate-methods {
+            background: var(--dark-light);
+            padding: 40px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .donate-methods h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: var(--secondary);
+        }
+
+        .method-card {
+            background: var(--dark-lighter);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+
+        .method-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .method-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text);
+        }
+
+        .method-description {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        .method-address {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: var(--secondary);
+            word-break: break-all;
+            background: var(--dark);
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .qr-code {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .qr-code img {
+            max-width: 200px;
+            border-radius: 8px;
+        }
+
+        .donation-amounts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .amount-btn {
+            background: var(--dark-lighter);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .amount-btn:hover {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+        }
+
+        .amount-btn.selected {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+        }
+
+        .custom-amount {
+            margin-top: 20px;
+        }
+
+        .custom-amount input {
+            width: 100%;
+            padding: 12px;
+            background: var(--dark-lighter);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 16px;
+        }
+
+        .custom-amount input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .donate-button {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .donate-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(106, 61, 154, 0.3);
+        }
+
+        .donate-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .thank-you {
+            text-align: center;
+            margin-top: 40px;
+            padding: 30px;
+            background: var(--dark-light);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .thank-you h3 {
+            color: var(--success);
+            margin-bottom: 15px;
+        }
+
+        .thank-you p {
+            color: var(--text-secondary);
+        }
+
+        footer {
+            background-color: var(--dark-light);
+            padding: 30px 0;
+            text-align: center;
+            margin-top: 60px;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
+            font-weight: 900;
+            color: var(--text);
+            margin-bottom: 15px;
+        }
+
+        .logo-icon {
+            font-size: 24px;
+            margin-right: 8px;
+        }
+
+        .social-links {
+            display: flex;
+            margin: 20px 0;
+        }
+
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            margin: 0 10px;
+            text-decoration: none;
+            transition: transform 0.3s;
+        }
+
+        .social-links a:hover {
+            transform: translateY(-3px);
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+            }
+
+            nav ul {
+                margin-top: 20px;
+            }
+
+            .donate-content {
+                grid-template-columns: 1fr;
+            }
+
+            .donate-hero h1 {
+                font-size: 36px;
+            }
+
+            .donation-amounts {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">⚔️</span>
+                    <span>Cambria Duel Tracker</span>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="leaderboard.html">Leaderboard</a></li>
+                        <li><a href="statistics.html">Statistics</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="donate.html" class="active">Donate</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="donate-hero">
+                <h1>Support the Project</h1>
+                <p>Help keep the Cambria Duel Arena Tracker running and improving. Your donations help cover server costs, development time, and new features.</p>
+            </div>
+
+            <div class="donate-content">
+                <div class="donate-info">
+                    <h2>Why Donate?</h2>
+                    <p>This project is built and maintained by developers who are passionate about the Cambria ecosystem. Your support helps us:</p>
+                    <ul style="color: var(--text-secondary); margin-left: 20px; margin-bottom: 20px;">
+                        <li>Keep the site running 24/7</li>
+                        <li>Add new features and improvements</li>
+                        <li>Maintain real-time data accuracy</li>
+                        <li>Support the community</li>
+                    </ul>
+
+                    <div class="donate-address">
+                        <div class="address-label">Ethereum Address</div>
+                        <div class="address-value" id="donationAddress">0x698e41734141ab1557a6c9e1bfdfbc875248336b</div>
+                        <button class="copy-address-btn" onclick="copyDonationAddress()">
+                            <span id="copyIcon">📋</span>
+                            <span id="copyText">Copy Address</span>
+                        </button>
+                    </div>
+
+                    <div class="qr-code">
+                        <p style="color: var(--text-secondary); margin-bottom: 15px;">Scan QR Code</p>
+                        <div id="qrCode" style="display: inline-block; background: white; padding: 20px; border-radius: 8px;"></div>
+                    </div>
+                </div>
+
+                <div class="donate-methods">
+                    <h2>Donation Methods</h2>
+                    
+                    <div class="method-card">
+                        <div class="method-title">Direct Transfer</div>
+                        <div class="method-description">Send ETH directly to the address above using your wallet</div>
+                        <div class="method-address">0x698e41734141ab1557a6c9e1bfdfbc875248336b</div>
+                    </div>
+
+                    <div class="method-card">
+                        <div class="method-title">Abstract L2</div>
+                        <div class="method-description">Send on Abstract L2 for lower gas fees</div>
+                        <div class="method-address">0x698e41734141ab1557a6c9e1bfdfbc875248336b</div>
+                    </div>
+
+                    <div class="method-card">
+                        <div class="method-title">Other Networks</div>
+                        <div class="method-description">Contact us for other network addresses if needed</div>
+                    </div>
+
+                    <h3 style="margin-top: 30px; margin-bottom: 15px; color: var(--secondary);">Suggested Amounts</h3>
+                    <div class="donation-amounts">
+                        <button class="amount-btn" onclick="selectAmount(0.001)">0.001 ETH</button>
+                        <button class="amount-btn" onclick="selectAmount(0.005)">0.005 ETH</button>
+                        <button class="amount-btn" onclick="selectAmount(0.01)">0.01 ETH</button>
+                        <button class="amount-btn" onclick="selectAmount(0.025)">0.025 ETH</button>
+                        <button class="amount-btn" onclick="selectAmount(0.05)">0.05 ETH</button>
+                        <button class="amount-btn" onclick="selectAmount(0.1)">0.1 ETH</button>
+                    </div>
+
+                    <div class="custom-amount">
+                        <label for="customAmount" style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Custom Amount (ETH)</label>
+                        <input type="number" id="customAmount" placeholder="0.001" step="0.001" min="0.001">
+                    </div>
+
+                    <button class="donate-button" onclick="openWallet()" id="donateBtn">
+                        Open Wallet to Donate
+                    </button>
+                </div>
+            </div>
+
+            <div class="thank-you">
+                <h3>Thank You! 🙏</h3>
+                <p>Every donation, no matter the size, helps us continue building and improving the Cambria Duel Arena Tracker. We appreciate your support!</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="logo">
+                    <span class="logo-icon">⚔️</span>
+                    <span>Cambria Duel Tracker</span>
+                </div>
+                <p>Track and analyze Cambria Duel Arena data on the Abstract L2 chain</p>
+                <div class="social-links">
+                    <a href="#"><span>𝕏</span></a>
+                    <a href="#"><span>𝐌</span></a>
+                    <a href="#"><span>𝐆</span></a>
+                </div>
+                <p>© 2023 Cambria Duel Tracker. Not affiliated with @playcambria.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script>
+        const DONATION_ADDRESS = '0x698e41734141ab1557a6c9e1bfdfbc875248336b';
+        let selectedAmount = 0.001;
+
+        // Generate QR code on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            generateQRCode();
+        });
+
+        function generateQRCode() {
+            const qrContainer = document.getElementById('qrCode');
+            QRCode.toCanvas(qrContainer, DONATION_ADDRESS, {
+                width: 200,
+                height: 200,
+                color: {
+                    dark: '#000000',
+                    light: '#FFFFFF'
+                }
+            }, function (error) {
+                if (error) {
+                    console.error('QR Code generation failed:', error);
+                    qrContainer.innerHTML = '<p style="color: var(--text-secondary);">QR Code unavailable</p>';
+                }
+            });
+        }
+
+        function copyDonationAddress() {
+            navigator.clipboard.writeText(DONATION_ADDRESS).then(function() {
+                const copyBtn = document.querySelector('.copy-address-btn');
+                const copyIcon = document.getElementById('copyIcon');
+                const copyText = document.getElementById('copyText');
+                
+                copyIcon.textContent = '✓';
+                copyText.textContent = 'Copied!';
+                copyBtn.classList.add('copied');
+                
+                setTimeout(() => {
+                    copyIcon.textContent = '📋';
+                    copyText.textContent = 'Copy Address';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Failed to copy address:', err);
+                alert('Failed to copy address. Please copy manually.');
+            });
+        }
+
+        function selectAmount(amount) {
+            selectedAmount = amount;
+            
+            // Update button states
+            document.querySelectorAll('.amount-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+            
+            // Update custom amount input
+            document.getElementById('customAmount').value = amount;
+        }
+
+        function openWallet() {
+            const amount = document.getElementById('customAmount').value || selectedAmount;
+            
+            // Try to open wallet with pre-filled amount
+            if (typeof window.ethereum !== 'undefined') {
+                // MetaMask or other Web3 wallet
+                window.ethereum.request({
+                    method: 'eth_sendTransaction',
+                    params: [{
+                        to: DONATION_ADDRESS,
+                        value: '0x' + (amount * Math.pow(10, 18)).toString(16), // Convert to wei
+                        from: window.ethereum.selectedAddress
+                    }]
+                }).catch(err => {
+                    console.log('Transaction cancelled or failed:', err);
+                    // Fallback to just copying address
+                    copyDonationAddress();
+                });
+            } else {
+                // No wallet detected, just copy address
+                copyDonationAddress();
+                alert('No Web3 wallet detected. Address copied to clipboard. Please send ' + amount + ' ETH to the copied address.');
+            }
+        }
+
+        // Update selected amount when custom input changes
+        document.getElementById('customAmount').addEventListener('input', function() {
+            selectedAmount = parseFloat(this.value) || 0.001;
+            
+            // Remove selection from amount buttons
+            document.querySelectorAll('.amount-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+        });
+    </script>
+</body>
+</html>
