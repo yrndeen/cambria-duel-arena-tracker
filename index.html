@@ -584,6 +584,43 @@ transition: transform 0.3s;
     text-decoration: underline;
 }
 
+.wallet-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.copy-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+}
+
+.copy-btn:hover {
+    background-color: rgba(106, 61, 154, 0.2);
+    color: var(--secondary);
+    transform: scale(1.1);
+}
+
+.copy-btn:active {
+    transform: scale(0.95);
+}
+
+.copy-btn.copied {
+    color: var(--success);
+    background-color: rgba(40, 167, 69, 0.2);
+}
+
 .tx-link {
     color: var(--secondary);
     text-decoration: none;
@@ -1208,11 +1245,21 @@ margin-top: 20px;
                 <div class="duel-players">
                     <div class="player-info">
                         <span class="player-label">Player 1:</span>
-                        <a href="#" id="modalPlayer1Link" class="wallet-link" target="_blank"></a>
+                        <div class="wallet-container">
+                            <a href="#" id="modalPlayer1Link" class="wallet-link" target="_blank"></a>
+                            <button class="copy-btn" onclick="copyWalletAddress('modalPlayer1Link')" title="Copy wallet address">
+                                📋
+                            </button>
+                        </div>
                     </div>
                     <div class="player-info">
                         <span class="player-label">Player 2:</span>
-                        <a href="#" id="modalPlayer2Link" class="wallet-link" target="_blank"></a>
+                        <div class="wallet-container">
+                            <a href="#" id="modalPlayer2Link" class="wallet-link" target="_blank"></a>
+                            <button class="copy-btn" onclick="copyWalletAddress('modalPlayer2Link')" title="Copy wallet address">
+                                📋
+                            </button>
+                        </div>
                     </div>
                     <div class="duel-wager">
                         <span class="wager-label">Wager:</span>
@@ -2030,6 +2077,66 @@ async function showDuelModal(duelId, player1, player2, wager) {
 function closeModal() {
     const modal = document.getElementById('duelModal');
     modal.style.display = 'none';
+}
+
+// Copy wallet address to clipboard
+async function copyWalletAddress(linkElementId) {
+    try {
+        const linkElement = document.getElementById(linkElementId);
+        const walletAddress = linkElement.href.split('/').pop(); // Extract address from the link
+        
+        // Copy to clipboard
+        await navigator.clipboard.writeText(walletAddress);
+        
+        // Visual feedback
+        const copyBtn = linkElement.parentElement.querySelector('.copy-btn');
+        const originalText = copyBtn.innerHTML;
+        copyBtn.innerHTML = '✓';
+        copyBtn.classList.add('copied');
+        
+        // Reset after 2 seconds
+        setTimeout(() => {
+            copyBtn.innerHTML = originalText;
+            copyBtn.classList.remove('copied');
+        }, 2000);
+        
+        // Show success message
+        if (window.cambriaWeb3 && window.cambriaWeb3.showSuccess) {
+            window.cambriaWeb3.showSuccess('Wallet address copied to clipboard!');
+        }
+        
+    } catch (error) {
+        console.error('Failed to copy wallet address:', error);
+        
+        // Fallback for older browsers
+        try {
+            const linkElement = document.getElementById(linkElementId);
+            const walletAddress = linkElement.href.split('/').pop();
+            
+            // Create a temporary textarea
+            const textArea = document.createElement('textarea');
+            textArea.value = walletAddress;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            // Visual feedback
+            const copyBtn = linkElement.parentElement.querySelector('.copy-btn');
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '✓';
+            copyBtn.classList.add('copied');
+            
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+                copyBtn.classList.remove('copied');
+            }, 2000);
+            
+        } catch (fallbackError) {
+            console.error('Fallback copy failed:', fallbackError);
+            alert('Failed to copy wallet address. Please copy manually.');
+        }
+    }
 }
 
 async function loadDuelTransactions(duelId) {
