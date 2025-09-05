@@ -505,28 +505,24 @@
                     </div>
 
                     <div class="method-card">
-                        <div class="method-title">Other Networks</div>
-                        <div class="method-description">Contact us for other network addresses if needed</div>
+                        <div class="method-title">Bitcoin (BTC)</div>
+                        <div class="method-description">Send Bitcoin to the address below</div>
+                        <div class="method-address" id="btcAddress">bc1prguzp8z59lah92yy08f7d0mf5dpy2fuzdwlg4uy8matlpm53vd0qrrkzrt</div>
+                        <button class="copy-address-btn" onclick="copyAddress('btcAddress')">
+                            <span>📋</span>
+                            <span>Copy BTC Address</span>
+                        </button>
                     </div>
 
-                    <h3 style="margin-top: 30px; margin-bottom: 15px; color: var(--secondary);">Suggested Amounts</h3>
-                    <div class="donation-amounts">
-                        <button class="amount-btn" onclick="selectAmount(0.001)">0.001 ETH</button>
-                        <button class="amount-btn" onclick="selectAmount(0.005)">0.005 ETH</button>
-                        <button class="amount-btn" onclick="selectAmount(0.01)">0.01 ETH</button>
-                        <button class="amount-btn" onclick="selectAmount(0.025)">0.025 ETH</button>
-                        <button class="amount-btn" onclick="selectAmount(0.05)">0.05 ETH</button>
-                        <button class="amount-btn" onclick="selectAmount(0.1)">0.1 ETH</button>
+                    <div class="method-card">
+                        <div class="method-title">Solana (SOL)</div>
+                        <div class="method-description">Send Solana to the address below</div>
+                        <div class="method-address" id="solAddress">3giEjoBj4aZfyjHzzV2TKUSjmBDiZrSA94Lxx3zBDHLA</div>
+                        <button class="copy-address-btn" onclick="copyAddress('solAddress')">
+                            <span>📋</span>
+                            <span>Copy SOL Address</span>
+                        </button>
                     </div>
-
-                    <div class="custom-amount">
-                        <label for="customAmount" style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Custom Amount (ETH)</label>
-                        <input type="number" id="customAmount" placeholder="0.001" step="0.001" min="0.001">
-                    </div>
-
-                    <button class="donate-button" onclick="openWallet()" id="donateBtn">
-                        Open Wallet to Donate
-                    </button>
                 </div>
             </div>
 
@@ -558,7 +554,6 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script>
         const DONATION_ADDRESS = '0x698e41734141ab1557a6c9e1bfdfbc875248336b';
-        let selectedAmount = 0.001;
 
         // Generate QR code on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -567,17 +562,28 @@
 
         function generateQRCode() {
             const qrContainer = document.getElementById('qrCode');
-            QRCode.toCanvas(qrContainer, DONATION_ADDRESS, {
+            
+            // Clear any existing content
+            qrContainer.innerHTML = '';
+            
+            // Create a canvas element
+            const canvas = document.createElement('canvas');
+            qrContainer.appendChild(canvas);
+            
+            QRCode.toCanvas(canvas, DONATION_ADDRESS, {
                 width: 200,
                 height: 200,
                 color: {
                     dark: '#000000',
                     light: '#FFFFFF'
-                }
+                },
+                margin: 2
             }, function (error) {
                 if (error) {
                     console.error('QR Code generation failed:', error);
                     qrContainer.innerHTML = '<p style="color: var(--text-secondary);">QR Code unavailable</p>';
+                } else {
+                    console.log('QR Code generated successfully');
                 }
             });
         }
@@ -585,8 +591,8 @@
         function copyDonationAddress() {
             navigator.clipboard.writeText(DONATION_ADDRESS).then(function() {
                 const copyBtn = document.querySelector('.copy-address-btn');
-                const copyIcon = document.getElementById('copyIcon');
-                const copyText = document.getElementById('copyText');
+                const copyIcon = copyBtn.querySelector('span:first-child');
+                const copyText = copyBtn.querySelector('span:last-child');
                 
                 copyIcon.textContent = '✓';
                 copyText.textContent = 'Copied!';
@@ -603,53 +609,30 @@
             });
         }
 
-        function selectAmount(amount) {
-            selectedAmount = amount;
+        function copyAddress(elementId) {
+            const addressElement = document.getElementById(elementId);
+            const address = addressElement.textContent;
             
-            // Update button states
-            document.querySelectorAll('.amount-btn').forEach(btn => {
-                btn.classList.remove('selected');
+            navigator.clipboard.writeText(address).then(function() {
+                const copyBtn = addressElement.nextElementSibling;
+                const copyIcon = copyBtn.querySelector('span:first-child');
+                const copyText = copyBtn.querySelector('span:last-child');
+                
+                copyIcon.textContent = '✓';
+                copyText.textContent = 'Copied!';
+                copyBtn.classList.add('copied');
+                
+                setTimeout(() => {
+                    copyIcon.textContent = '📋';
+                    copyText.textContent = copyText.textContent.replace('Copied!', 'Copy ' + (elementId === 'btcAddress' ? 'BTC' : 'SOL') + ' Address');
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Failed to copy address:', err);
+                alert('Failed to copy address. Please copy manually.');
             });
-            event.target.classList.add('selected');
-            
-            // Update custom amount input
-            document.getElementById('customAmount').value = amount;
         }
 
-        function openWallet() {
-            const amount = document.getElementById('customAmount').value || selectedAmount;
-            
-            // Try to open wallet with pre-filled amount
-            if (typeof window.ethereum !== 'undefined') {
-                // MetaMask or other Web3 wallet
-                window.ethereum.request({
-                    method: 'eth_sendTransaction',
-                    params: [{
-                        to: DONATION_ADDRESS,
-                        value: '0x' + (amount * Math.pow(10, 18)).toString(16), // Convert to wei
-                        from: window.ethereum.selectedAddress
-                    }]
-                }).catch(err => {
-                    console.log('Transaction cancelled or failed:', err);
-                    // Fallback to just copying address
-                    copyDonationAddress();
-                });
-            } else {
-                // No wallet detected, just copy address
-                copyDonationAddress();
-                alert('No Web3 wallet detected. Address copied to clipboard. Please send ' + amount + ' ETH to the copied address.');
-            }
-        }
-
-        // Update selected amount when custom input changes
-        document.getElementById('customAmount').addEventListener('input', function() {
-            selectedAmount = parseFloat(this.value) || 0.001;
-            
-            // Remove selection from amount buttons
-            document.querySelectorAll('.amount-btn').forEach(btn => {
-                btn.classList.remove('selected');
-            });
-        });
     </script>
 </body>
 </html>
