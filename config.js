@@ -10,7 +10,7 @@ const CONFIG = {
     
     // Smart Contract Addresses
     CONTRACTS: {
-        DUEL_ARENA_BATTLE: '0x5f8abf7f164fbed5c51f696ddf3c2c17bcbc8fbbe',
+        DUEL_ARENA_BATTLE: '0x5f8abf7f164fbed5c51f696ddf3c2c17bcbc8fbb',
         DUEL_ARENA_ESCROW: '0x682a307e2274c24f305d6a81682a0b5eb7612a7e'
     },
     
