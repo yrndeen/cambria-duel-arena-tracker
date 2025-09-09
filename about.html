@@ -546,6 +546,9 @@ function switchChain(chain) {
         });
         document.querySelector(`[data-chain="${chain}"]`).classList.add('active');
         
+        // Update chain-specific text
+        updateChainSpecificText();
+        
         // Show notification
         showNotification(`Switched to ${CONFIG.getCurrentChain().CHAIN_NAME}`, 'success');
     }
@@ -559,6 +562,27 @@ function loadSavedTheme() {
             btn.classList.remove('active');
         });
         document.querySelector(`[data-chain="${CONFIG.ACTIVE_CHAIN}"]`).classList.add('active');
+        
+        // Update chain-specific text
+        updateChainSpecificText();
+    }
+}
+
+// Update chain-specific text throughout the page
+function updateChainSpecificText() {
+    const currentChain = CONFIG.getCurrentChain();
+    const chainName = currentChain.CHAIN_NAME;
+    
+    // Update page title
+    const pageTitle = document.querySelector('h1');
+    if (pageTitle) {
+        pageTitle.textContent = `About - ${chainName}`;
+    }
+    
+    // Update how it works section
+    const howItWorks = document.querySelector('.content-section p');
+    if (howItWorks && howItWorks.textContent.includes('Abstract L2')) {
+        howItWorks.textContent = `Our platform connects directly to the ${chainName} blockchain to fetch real-time data from the Cambria Duel Arena smart contracts. We process and analyze this data to provide:`;
     }
 }
 

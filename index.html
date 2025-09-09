@@ -1616,8 +1616,17 @@ async function searchWallet(walletAddress) {
         // Update AbScan link
         document.getElementById('walletAbscanLink').href = window.cambriaWeb3.generateWalletLink(walletAddress);
         
-        // Update ABS Portal link
-        document.getElementById('absPortalLink').href = `https://portal.abs.xyz/profile/${walletAddress}`;
+        // Update Portal link based on current chain
+        const currentChain = CONFIG.getCurrentChain();
+        const portalLink = document.getElementById('absPortalLink');
+        if (currentChain.CHAIN_NAME === 'Abstract') {
+            portalLink.href = `https://portal.abs.xyz/profile/${walletAddress}`;
+            portalLink.textContent = 'ABS Portal';
+        } else {
+            // For Ronin, use the explorer address page
+            portalLink.href = window.cambriaWeb3.generateWalletLink(walletAddress);
+            portalLink.textContent = 'Ronin Explorer';
+        }
         
         // Add to search history
         addToSearchHistory(walletAddress);
@@ -2509,6 +2518,23 @@ function switchChain(chain) {
             window.cambriaWeb3.updateChainConfig();
         }
         
+        // Update chain-specific text
+        updateChainSpecificText();
+        
+        // Update portal link if wallet is currently displayed
+        const currentWallet = document.getElementById('walletAddress').value;
+        if (currentWallet && currentWallet.trim() !== '') {
+            const currentChain = CONFIG.getCurrentChain();
+            const portalLink = document.getElementById('absPortalLink');
+            if (currentChain.CHAIN_NAME === 'Abstract') {
+                portalLink.href = `https://portal.abs.xyz/profile/${currentWallet}`;
+                portalLink.textContent = 'ABS Portal';
+            } else {
+                portalLink.href = window.cambriaWeb3.generateWalletLink(currentWallet);
+                portalLink.textContent = 'Ronin Explorer';
+            }
+        }
+        
         // Refresh data
         if (typeof refreshData === 'function') {
             refreshData();
@@ -2527,7 +2553,34 @@ function loadSavedTheme() {
             btn.classList.remove('active');
         });
         document.querySelector(`[data-chain="${CONFIG.ACTIVE_CHAIN}"]`).classList.add('active');
+        
+        // Update chain-specific text
+        updateChainSpecificText();
     }
+}
+
+// Update chain-specific text throughout the page
+function updateChainSpecificText() {
+    const currentChain = CONFIG.getCurrentChain();
+    const chainName = currentChain.CHAIN_NAME;
+    
+    // Update main description
+    const mainDesc = document.querySelector('.hero-description');
+    if (mainDesc) {
+        mainDesc.textContent = `Analyze wallet statistics, track profits and losses, and explore duel history on the ${chainName} chain`;
+    }
+    
+    // Update footer description
+    const footerDesc = document.querySelector('.footer-description');
+    if (footerDesc) {
+        footerDesc.textContent = `Track and analyze Cambria Duel Arena data on the ${chainName} chain`;
+    }
+    
+    // Update transaction link text
+    const txLinks = document.querySelectorAll('.tx-link');
+    txLinks.forEach(link => {
+        link.textContent = `🔗 View Transaction on ${chainName}`;
+    });
 }
 
 // Show notification

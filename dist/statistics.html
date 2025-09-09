@@ -760,6 +760,9 @@ function switchChain(chain) {
             window.cambriaWeb3.updateChainConfig();
         }
         
+        // Update chain-specific text
+        updateChainSpecificText();
+        
         // Refresh data
         if (typeof loadStatisticsData === 'function') {
             loadStatisticsData();
@@ -778,7 +781,28 @@ function loadSavedTheme() {
             btn.classList.remove('active');
         });
         document.querySelector(`[data-chain="${CONFIG.ACTIVE_CHAIN}"]`).classList.add('active');
+        
+        // Update chain-specific text
+        updateChainSpecificText();
     }
+}
+
+// Update chain-specific text throughout the page
+function updateChainSpecificText() {
+    const currentChain = CONFIG.getCurrentChain();
+    const chainName = currentChain.CHAIN_NAME;
+    
+    // Update page title
+    const pageTitle = document.querySelector('h1');
+    if (pageTitle) {
+        pageTitle.textContent = `Statistics - ${chainName}`;
+    }
+    
+    // Update transaction link text
+    const txLinks = document.querySelectorAll('.tx-link');
+    txLinks.forEach(link => {
+        link.textContent = `🔗 View Transaction on ${chainName}`;
+    });
 }
 
 // Show notification

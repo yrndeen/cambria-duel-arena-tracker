@@ -764,14 +764,14 @@ class CambriaWeb3 {
         }
     }
 
-    // Generate transaction link for Abstract L2
+    // Generate transaction link for current chain
     generateTransactionLink(txHash) {
-        return `${CONFIG.EXPLORER_URL}/tx/${txHash}`;
+        return `${this.currentChain.EXPLORER_URL}/tx/${txHash}`;
     }
 
-    // Generate wallet link for Abstract L2
+    // Generate wallet link for current chain
     generateWalletLink(walletAddress) {
-        return `${CONFIG.EXPLORER_URL}/address/${walletAddress}`;
+        return `${this.currentChain.EXPLORER_URL}/address/${walletAddress}`;
     }
 
     // Get battle information by ID
