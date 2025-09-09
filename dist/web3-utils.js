@@ -28,6 +28,9 @@ class CambriaWeb3 {
         
         // Check if API server is available
         this.checkApiServer();
+        
+        // Initialize with current chain config
+        this.updateChainConfig();
     }
     
     // Check if API server is available
@@ -50,11 +53,28 @@ class CambriaWeb3 {
         }
     }
 
+    // Update chain configuration
+    updateChainConfig() {
+        const currentChain = CONFIG.getCurrentChain();
+        this.currentChain = currentChain;
+        this.currentContracts = CONFIG.getCurrentContracts();
+        
+        // Update provider if it exists
+        if (this.provider) {
+            this.provider = new ethers.providers.JsonRpcProvider(currentChain.RPC_URL);
+        }
+        
+        // Clear cache when switching chains
+        this.clearCache();
+        
+        console.log(`Switched to ${currentChain.CHAIN_NAME} chain`);
+    }
+
     // Initialize Web3 connection (read-only mode)
     async initialize() {
         try {
-            // Use public RPC endpoint for read-only access
-            this.provider = new ethers.providers.JsonRpcProvider(CONFIG.RPC_URL);
+            // Use current chain RPC endpoint for read-only access
+            this.provider = new ethers.providers.JsonRpcProvider(this.currentChain.RPC_URL);
             
             // Initialize contracts
             await this.initializeContracts();
@@ -112,15 +132,15 @@ class CambriaWeb3 {
     // Initialize smart contracts
     async initializeContracts() {
         try {
-            // Create contract instances
+            // Create contract instances using current chain contracts
             this.contracts.duelArenaBattle = new ethers.Contract(
-                CONFIG.CONTRACTS.DUEL_ARENA_BATTLE,
+                this.currentContracts.DUEL_ARENA_BATTLE,
                 CONFIG.ABIS.DUEL_ARENA_BATTLE,
                 this.provider
             );
 
             this.contracts.duelArenaEscrow = new ethers.Contract(
-                CONFIG.CONTRACTS.DUEL_ARENA_ESCROW,
+                this.currentContracts.DUEL_ARENA_ESCROW,
                 CONFIG.ABIS.DUEL_ARENA_ESCROW,
                 this.provider
             );

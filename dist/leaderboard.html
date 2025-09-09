@@ -57,6 +57,48 @@ justify-content: space-between;
 align-items: center;
 }
 
+.chain-toggle {
+display: flex;
+gap: 8px;
+margin: 0 20px;
+}
+
+.chain-btn {
+background: var(--dark-lighter);
+border: 2px solid var(--border);
+color: var(--text-secondary);
+padding: 8px 16px;
+border-radius: 8px;
+cursor: pointer;
+transition: all 0.3s;
+display: flex;
+align-items: center;
+gap: 6px;
+font-size: 14px;
+font-weight: 500;
+}
+
+.chain-btn:hover {
+border-color: var(--primary);
+color: var(--text);
+transform: translateY(-2px);
+}
+
+.chain-btn.active {
+background: var(--primary);
+border-color: var(--primary);
+color: white;
+}
+
+.chain-btn.active:hover {
+background: var(--primary-light);
+border-color: var(--primary-light);
+}
+
+.chain-icon {
+font-size: 16px;
+}
+
 .logo {
 font-family: 'Orbitron', sans-serif;
 font-size: 28px;
@@ -278,6 +320,18 @@ color: var(--secondary);
 <span class="logo-icon">⚔️</span>
 <span>Cambria Duel Tracker</span>
 </div>
+
+<div class="chain-toggle">
+<button class="chain-btn active" data-chain="abstract" onclick="switchChain('abstract')">
+<span class="chain-icon">🔷</span>
+<span>Abstract L2</span>
+</button>
+<button class="chain-btn" data-chain="ronin" onclick="switchChain('ronin')">
+<span class="chain-icon">🔵</span>
+<span>Ronin</span>
+</button>
+</div>
+
 <nav>
 <ul>
 <li><a href="index.html">Home</a></li>
@@ -629,6 +683,69 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// Chain switching functionality
+function switchChain(chain) {
+    if (CONFIG.switchChain(chain)) {
+        // Update UI
+        document.querySelectorAll('.chain-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-chain="${chain}"]`).classList.add('active');
+        
+        // Update web3 connection
+        if (window.cambriaWeb3) {
+            window.cambriaWeb3.updateChainConfig();
+        }
+        
+        // Refresh data
+        if (typeof loadLeaderboardData === 'function') {
+            loadLeaderboardData();
+        }
+        
+        // Show notification
+        showNotification(`Switched to ${CONFIG.getCurrentChain().CHAIN_NAME}`, 'success');
+    }
+}
+
+// Show notification
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    // Style the notification
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: var(--primary);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 1000;
+        font-weight: 500;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 3000);
+}
 </script>
 </body>
 </html>

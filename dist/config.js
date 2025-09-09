@@ -1,17 +1,67 @@
 // Cambria Duel Arena Smart Contract Configuration
-// Abstract L2 Chain Integration
+// Multi-Chain Support: Abstract L2 and Ronin
 
 const CONFIG = {
-    // Abstract L2 Chain Configuration
-    CHAIN_ID: 2741,
-    CHAIN_NAME: 'Abstract',
-    RPC_URL: 'https://api.abstract.xyz',
-    EXPLORER_URL: 'https://abscan.org',
+    // Current active chain
+    ACTIVE_CHAIN: 'abstract', // 'abstract' or 'ronin'
     
-    // Smart Contract Addresses
-    CONTRACTS: {
-        DUEL_ARENA_BATTLE: '0x5f8abf7f164fbed5c51f696ddf3c2c17bcbc8fbb',
-        DUEL_ARENA_ESCROW: '0x682a307e2274c24f305d6a81682a0b5eb7612a7e'
+    // Abstract L2 Chain Configuration
+    ABSTRACT: {
+        CHAIN_ID: 2741,
+        CHAIN_NAME: 'Abstract',
+        RPC_URL: 'https://api.abstract.xyz',
+        EXPLORER_URL: 'https://abscan.org',
+        CONTRACTS: {
+            DUEL_ARENA_BATTLE: '0x5f8abf7f164fbed5c51f696ddf3c2c17bcbc8fbb',
+            DUEL_ARENA_ESCROW: '0x682a307e2274c24f305d6a81682a0b5eb7612a7e'
+        }
+    },
+    
+    // Ronin Chain Configuration
+    RONIN: {
+        CHAIN_ID: 2020,
+        CHAIN_NAME: 'Ronin',
+        RPC_URL: 'https://api.roninchain.com/rpc',
+        EXPLORER_URL: 'https://app.roninchain.com',
+        CONTRACTS: {
+            DUEL_ARENA_BATTLE: '0x0000000000000000000000000000000000000000', // TODO: Get actual Ronin contract addresses
+            DUEL_ARENA_ESCROW: '0x0000000000000000000000000000000000000000'  // TODO: Get actual Ronin contract addresses
+        }
+    },
+    
+    // Get current chain config
+    getCurrentChain() {
+        return this[this.ACTIVE_CHAIN.toUpperCase()];
+    },
+    
+    // Get current contracts
+    getCurrentContracts() {
+        return this.getCurrentChain().CONTRACTS;
+    },
+    
+    // Switch active chain
+    switchChain(chain) {
+        if (chain === 'abstract' || chain === 'ronin') {
+            this.ACTIVE_CHAIN = chain;
+            this.updateTheme();
+            return true;
+        }
+        return false;
+    },
+    
+    // Update theme based on active chain
+    updateTheme() {
+        const theme = this.UI.THEMES[this.ACTIVE_CHAIN.toUpperCase()];
+        const root = document.documentElement;
+        
+        if (root && theme) {
+            root.style.setProperty('--primary', theme.PRIMARY);
+            root.style.setProperty('--primary-light', theme.PRIMARY_LIGHT);
+            root.style.setProperty('--primary-dark', theme.PRIMARY_DARK);
+            root.style.setProperty('--secondary', theme.SECONDARY);
+            root.style.setProperty('--secondary-light', theme.SECONDARY_LIGHT);
+            root.style.setProperty('--secondary-dark', theme.SECONDARY_DARK);
+        }
     },
     
     // Contract ABIs (simplified for key functions)
@@ -70,7 +120,27 @@ const CONFIG = {
     UI: {
         REFRESH_INTERVAL: 30000, // 30 seconds
         MAX_DUELS_DISPLAY: 50,
-        CHART_UPDATE_INTERVAL: 60000 // 1 minute
+        CHART_UPDATE_INTERVAL: 60000, // 1 minute
+        
+        // Theme Configuration
+        THEMES: {
+            ABSTRACT: {
+                PRIMARY: '#6a3d9a',
+                PRIMARY_LIGHT: '#8b5fb8',
+                PRIMARY_DARK: '#4a2c6b',
+                SECONDARY: '#00b4d8',
+                SECONDARY_LIGHT: '#33c4e0',
+                SECONDARY_DARK: '#0099b8'
+            },
+            RONIN: {
+                PRIMARY: '#1e40af',
+                PRIMARY_LIGHT: '#3b82f6',
+                PRIMARY_DARK: '#1e3a8a',
+                SECONDARY: '#0ea5e9',
+                SECONDARY_LIGHT: '#38bdf8',
+                SECONDARY_DARK: '#0284c7'
+            }
+        }
     },
     
     // Error Messages
@@ -79,7 +149,8 @@ const CONFIG = {
         CONTRACT_ERROR: 'Smart contract interaction failed. Please try again.',
         WALLET_NOT_FOUND: 'Wallet address not found in duel history.',
         INVALID_ADDRESS: 'Invalid wallet address format.',
-        CHAIN_NOT_SUPPORTED: 'Please switch to Abstract L2 network.'
+        CHAIN_NOT_SUPPORTED: 'Please switch to a supported network (Abstract L2 or Ronin).',
+        CONTRACT_NOT_DEPLOYED: 'Duel Arena contracts not yet deployed on this chain.'
     }
 };
 
