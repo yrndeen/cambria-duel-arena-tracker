@@ -61,7 +61,21 @@ const CONFIG = {
             root.style.setProperty('--secondary', theme.SECONDARY);
             root.style.setProperty('--secondary-light', theme.SECONDARY_LIGHT);
             root.style.setProperty('--secondary-dark', theme.SECONDARY_DARK);
+            
+            // Save theme preference to localStorage
+            localStorage.setItem('cambria-active-chain', this.ACTIVE_CHAIN);
         }
+    },
+    
+    // Load theme from localStorage
+    loadTheme() {
+        const savedChain = localStorage.getItem('cambria-active-chain');
+        if (savedChain && (savedChain === 'abstract' || savedChain === 'ronin')) {
+            this.ACTIVE_CHAIN = savedChain;
+            this.updateTheme();
+            return true;
+        }
+        return false;
     },
     
     // Contract ABIs (simplified for key functions)

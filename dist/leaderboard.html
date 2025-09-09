@@ -59,44 +59,77 @@ align-items: center;
 
 .chain-toggle {
 display: flex;
-gap: 8px;
+gap: 12px;
 margin: 0 20px;
+background: var(--dark-lighter);
+padding: 6px;
+border-radius: 12px;
+border: 1px solid var(--border);
 }
 
 .chain-btn {
-background: var(--dark-lighter);
-border: 2px solid var(--border);
+background: transparent;
+border: none;
 color: var(--text-secondary);
-padding: 8px 16px;
+padding: 10px 18px;
 border-radius: 8px;
 cursor: pointer;
-transition: all 0.3s;
+transition: all 0.3s ease;
 display: flex;
 align-items: center;
-gap: 6px;
+gap: 8px;
 font-size: 14px;
-font-weight: 500;
+font-weight: 600;
+position: relative;
+overflow: hidden;
+}
+
+.chain-btn::before {
+content: '';
+position: absolute;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+opacity: 0;
+transition: opacity 0.3s ease;
+border-radius: 8px;
+}
+
+.chain-btn:hover::before {
+opacity: 0.1;
 }
 
 .chain-btn:hover {
-border-color: var(--primary);
 color: var(--text);
-transform: translateY(-2px);
+transform: translateY(-1px);
 }
 
 .chain-btn.active {
-background: var(--primary);
-border-color: var(--primary);
+background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
 color: white;
+box-shadow: 0 4px 12px rgba(106, 61, 154, 0.3);
 }
 
 .chain-btn.active:hover {
-background: var(--primary-light);
-border-color: var(--primary-light);
+transform: translateY(-2px);
+box-shadow: 0 6px 16px rgba(106, 61, 154, 0.4);
+}
+
+.chain-btn.active::before {
+opacity: 0;
 }
 
 .chain-icon {
-font-size: 16px;
+font-size: 18px;
+position: relative;
+z-index: 1;
+}
+
+.chain-btn span:last-child {
+position: relative;
+z-index: 1;
 }
 
 .logo {
@@ -323,11 +356,11 @@ color: var(--secondary);
 
 <div class="chain-toggle">
 <button class="chain-btn active" data-chain="abstract" onclick="switchChain('abstract')">
-<span class="chain-icon">🔷</span>
+<span class="chain-icon">🟢</span>
 <span>Abstract L2</span>
 </button>
 <button class="chain-btn" data-chain="ronin" onclick="switchChain('ronin')">
-<span class="chain-icon">🔵</span>
+<span class="chain-icon">⚔️</span>
 <span>Ronin</span>
 </button>
 </div>
@@ -489,6 +522,8 @@ color: var(--secondary);
 <script>
 // Cambria Duel Arena Leaderboard - Smart Contract Integration
 document.addEventListener('DOMContentLoaded', function() {
+    // Load saved theme first
+    loadSavedTheme();
     initializeLeaderboard();
 });
 
@@ -705,6 +740,17 @@ function switchChain(chain) {
         
         // Show notification
         showNotification(`Switched to ${CONFIG.getCurrentChain().CHAIN_NAME}`, 'success');
+    }
+}
+
+// Load saved theme on page load
+function loadSavedTheme() {
+    if (CONFIG.loadTheme()) {
+        // Update UI to reflect saved theme
+        document.querySelectorAll('.chain-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-chain="${CONFIG.ACTIVE_CHAIN}"]`).classList.add('active');
     }
 }
 

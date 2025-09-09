@@ -54,6 +54,81 @@ justify-content: space-between;
 align-items: center;
 }
 
+.chain-toggle {
+display: flex;
+gap: 12px;
+margin: 0 20px;
+background: var(--dark-lighter);
+padding: 6px;
+border-radius: 12px;
+border: 1px solid var(--border);
+}
+
+.chain-btn {
+background: transparent;
+border: none;
+color: var(--text-secondary);
+padding: 10px 18px;
+border-radius: 8px;
+cursor: pointer;
+transition: all 0.3s ease;
+display: flex;
+align-items: center;
+gap: 8px;
+font-size: 14px;
+font-weight: 600;
+position: relative;
+overflow: hidden;
+}
+
+.chain-btn::before {
+content: '';
+position: absolute;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+opacity: 0;
+transition: opacity 0.3s ease;
+border-radius: 8px;
+}
+
+.chain-btn:hover::before {
+opacity: 0.1;
+}
+
+.chain-btn:hover {
+color: var(--text);
+transform: translateY(-1px);
+}
+
+.chain-btn.active {
+background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+color: white;
+box-shadow: 0 4px 12px rgba(106, 61, 154, 0.3);
+}
+
+.chain-btn.active:hover {
+transform: translateY(-2px);
+box-shadow: 0 6px 16px rgba(106, 61, 154, 0.4);
+}
+
+.chain-btn.active::before {
+opacity: 0;
+}
+
+.chain-icon {
+font-size: 18px;
+position: relative;
+z-index: 1;
+}
+
+.chain-btn span:last-child {
+position: relative;
+z-index: 1;
+}
+
 .logo {
 font-family: 'Orbitron', sans-serif;
 font-size: 28px;
@@ -299,6 +374,18 @@ align-items: center;
 <span class="logo-icon">⚔️</span>
 <span>Cambria Duel Tracker</span>
 </div>
+
+<div class="chain-toggle">
+<button class="chain-btn active" data-chain="abstract" onclick="switchChain('abstract')">
+<span class="chain-icon">🟢</span>
+<span>Abstract L2</span>
+</button>
+<button class="chain-btn" data-chain="ronin" onclick="switchChain('ronin')">
+<span class="chain-icon">⚔️</span>
+<span>Ronin</span>
+</button>
+</div>
+
 <nav>
 <ul>
 <li><a href="index.html">Home</a></li>
@@ -448,5 +535,76 @@ align-items: center;
 </div>
 </div>
 </footer>
+
+<script>
+// Chain switching functionality
+function switchChain(chain) {
+    if (CONFIG.switchChain(chain)) {
+        // Update UI
+        document.querySelectorAll('.chain-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-chain="${chain}"]`).classList.add('active');
+        
+        // Show notification
+        showNotification(`Switched to ${CONFIG.getCurrentChain().CHAIN_NAME}`, 'success');
+    }
+}
+
+// Load saved theme on page load
+function loadSavedTheme() {
+    if (CONFIG.loadTheme()) {
+        // Update UI to reflect saved theme
+        document.querySelectorAll('.chain-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-chain="${CONFIG.ACTIVE_CHAIN}"]`).classList.add('active');
+    }
+}
+
+// Show notification
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    // Style the notification
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: var(--primary);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 1000;
+        font-weight: 500;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 3000);
+}
+
+// Load saved theme on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadSavedTheme();
+});
+</script>
 </body>
 </html>
