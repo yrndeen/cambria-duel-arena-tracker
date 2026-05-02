@@ -1,8 +1,6 @@
 {
   "totalEvents": 245,
-  "totalBattles": 245,
-  "uniquePlayers": 63,
-  "totalWagered": "2.8325",
-  "lastUpdated": "2026-05-02T20:26:55.326Z",
-  "status": "static-export"
+  "lastUpdated": "2026-05-02T21:06:49.391Z",
+  "status": "static-export",
+  "note": "Data exported from SQLite database"
 }

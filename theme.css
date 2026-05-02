@@ -166,7 +166,11 @@ input.search-input:-webkit-autofill:active {
   border: 1px solid rgba(255, 122, 60, 0.4);
 }
 
-/* Removed ALL table row hover effects - no animations except buttons */
+.live-feed-table tr:hover,
+.leaderboard-table tr:hover,
+.duels-table tr:hover {
+  background-color: rgba(255, 90, 31, 0.12);
+}
 
 .social-links a:hover {
   box-shadow: 0 10px 24px var(--glow);

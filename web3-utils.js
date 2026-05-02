@@ -545,17 +545,9 @@ return false;
                         method: 'GET',
                         headers: { 'Content-Type': 'application/json' }
                     });
-        if (response.ok) {
-          const result = await response.json();
-          
-          // The API returns {stats, events, address}, extract just stats
-          const stats = result.stats || result;
-
-          // Cache the result
-          this.setCachedData('walletStats', walletAddress, stats);
-
-          return stats;
-        }
+                    if (response.ok) {
+                        return await response.json();
+                    }
                 } catch (apiErr) {
                     console.log('Statistics API error:', apiErr);
                 }
@@ -893,42 +885,23 @@ return false;
                 return cached;
             }
 
-    // Use static data if available
-    if (this.staticData && this.staticData.events) {
-      const ps = pageSize || 100;
-      const pg = page || 1;
-      const offset = (pg - 1) * ps;
-      const paginatedEvents = this.staticData.events.slice(offset, offset + ps);
+// Use static data if available
+if (this.staticData && this.staticData.events) {
+const ps = pageSize || 100;
+const pg = page || 1;
+const offset = (pg - 1) * ps;
+const paginatedEvents = this.staticData.events.slice(offset, offset + ps);
 
-      // Transform events into duel format
-      const duels = paginatedEvents.map(event => {
-        try {
-          const payload = JSON.parse(event.payload);
-          return {
-            id: event.duel_id || payload.battleId || payload.duelId,
-            player1: payload.player1 || payload.playerOne,
-            player2: payload.player2 || payload.playerTwo,
-            wager: parseFloat(payload.wager || 0),
-            status: 'pending', // Default status
-            timestamp: event.block_number,
-            transactionHash: event.tx_hash,
-            blockNumber: event.block_number
-          };
-        } catch (e) {
-          return null;
-        }
-      }).filter(d => d !== null);
-
-      return {
-        total: this.staticData.events.length,
-        page: pg,
-        pageSize: ps,
-        totalPages: Math.ceil(this.staticData.events.length / ps),
-        hasNext: offset + ps < this.staticData.events.length,
-        hasPrevious: pg > 1,
-        duels: duels
-      };
-    }
+return {
+total: this.staticData.events.length,
+page: pg,
+pageSize: ps,
+totalPages: Math.ceil(this.staticData.events.length / ps),
+hasNext: offset + ps < this.staticData.events.length,
+hasPrevious: pg > 1,
+duels: paginatedEvents
+};
+}
 
 if (this.useApiServer) {
 try {
