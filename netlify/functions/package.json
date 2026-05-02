@@ -1,0 +1,7 @@
+{
+  "name": "cambria-netlify-functions",
+  "version": "1.0.0",
+  "description": "Netlify Functions for Cambria Duel Arena",
+  "private": true,
+  "note": "This file ensures the api-data folder is included in the function deployment"
+}
