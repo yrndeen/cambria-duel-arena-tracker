@@ -14,12 +14,17 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Try multiple possible paths for the data file
+    // On Netlify, functions are deployed to /var/task/ with the function file
+    // The api-data folder should be alongside this function file
     const possiblePaths = [
+      // Local development
       path.join(__dirname, 'api-data', 'events.json'),
-      path.join(__dirname, '..', 'dist', 'api-data', 'events.json'),
-      path.join(process.cwd(), 'dist', 'api-data', 'events.json'),
+      path.join(process.cwd(), 'netlify', 'functions', 'api-data', 'events.json'),
+      // Netlify deployment
       path.join('/var/task', 'api-data', 'events.json'),
+      path.join('/var/task', 'netlify', 'functions', 'api-data', 'events.json'),
+      // Alternative paths
+      path.join(__dirname, '..', 'api-data', 'events.json'),
       path.join('/var/task', 'dist', 'api-data', 'events.json')
     ];
     
@@ -27,10 +32,17 @@ exports.handler = async (event, context) => {
     let foundPath = null;
     
     for (const p of possiblePaths) {
-      if (fs.existsSync(p)) {
-        foundPath = p;
-        allEvents = JSON.parse(fs.readFileSync(p, 'utf8'));
-        break;
+      try {
+        if (fs.existsSync(p)) {
+          const data = fs.readFileSync(p, 'utf8');
+          allEvents = JSON.parse(data);
+          if (allEvents && allEvents.length > 0) {
+            foundPath = p;
+            break;
+          }
+        }
+      } catch (e) {
+        // Try next path
       }
     }
     
@@ -38,8 +50,9 @@ exports.handler = async (event, context) => {
       return {
         statusCode: 500,
         body: JSON.stringify({ 
-          error: 'Data not available',
-          tried: possiblePaths
+          error: 'Data not available - events.json not found',
+          tried: possiblePaths,
+          exists: possiblePaths.map(p => ({ path: p, exists: fs.existsSync(p) }))
         })
       };
     }
