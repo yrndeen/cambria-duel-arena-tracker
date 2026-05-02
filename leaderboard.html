@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Leaderboard - Cambria Duel Arena Tracker</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="assets/cambria-emblem.png" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/cambria-emblem.png">
+<title>Leaderboard — Cambria Duel Arena Data</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Rajdhani:wght@400;500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
 <script src="config.js"></script>
 <script src="web3-utils.js"></script>
@@ -44,7 +46,7 @@ padding: 0 20px;
 
 header {
 background: linear-gradient(to right, var(--primary-dark), var(--primary));
-padding: 20px 0;
+padding: 12px 0;
 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 position: sticky;
 top: 0;
@@ -55,81 +57,6 @@ z-index: 100;
 display: flex;
 justify-content: space-between;
 align-items: center;
-}
-
-.chain-toggle {
-display: flex;
-gap: 12px;
-margin: 0 20px;
-background: var(--dark-lighter);
-padding: 6px;
-border-radius: 12px;
-border: 1px solid var(--border);
-}
-
-.chain-btn {
-background: transparent;
-border: none;
-color: var(--text-secondary);
-padding: 10px 18px;
-border-radius: 8px;
-cursor: pointer;
-transition: all 0.3s ease;
-display: flex;
-align-items: center;
-gap: 8px;
-font-size: 14px;
-font-weight: 600;
-position: relative;
-overflow: hidden;
-}
-
-.chain-btn::before {
-content: '';
-position: absolute;
-top: 0;
-left: 0;
-right: 0;
-bottom: 0;
-background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-opacity: 0;
-transition: opacity 0.3s ease;
-border-radius: 8px;
-}
-
-.chain-btn:hover::before {
-opacity: 0.1;
-}
-
-.chain-btn:hover {
-color: var(--text);
-transform: translateY(-1px);
-}
-
-.chain-btn.active {
-background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-color: white;
-box-shadow: 0 4px 12px rgba(106, 61, 154, 0.3);
-}
-
-.chain-btn.active:hover {
-transform: translateY(-2px);
-box-shadow: 0 6px 16px rgba(106, 61, 154, 0.4);
-}
-
-.chain-btn.active::before {
-opacity: 0;
-}
-
-.chain-icon {
-font-size: 18px;
-position: relative;
-z-index: 1;
-}
-
-.chain-btn span:last-child {
-position: relative;
-z-index: 1;
 }
 
 .logo {
@@ -170,7 +97,7 @@ color: var(--secondary);
 .hero {
 text-align: center;
 padding: 60px 0;
-background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%234a2a75"/><path d="M0 0L100 100" stroke="%236a3d9a" stroke-width="2"/><path d="M100 0L0 100" stroke="%236a3d9a" stroke-width="2"/></svg>');
+background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23201210"/><path d="M0 0L100 100" stroke="%23ff5a1f" stroke-width="2"/><path d="M100 0L0 100" stroke="%23ff5a1f" stroke-width="2"/></svg>');
 background-size: cover;
 margin-bottom: 40px;
 }
@@ -220,26 +147,48 @@ color: white;
 
 .leaderboard-table {
 width: 100%;
-border-collapse: collapse;
-background-color: var(--dark-light);
-border-radius: 8px;
+border-collapse: separate;
+border-spacing: 0;
+background: linear-gradient(135deg, rgba(26, 15, 15, 0.6) 0%, rgba(42, 23, 23, 0.4) 100%);
+border-radius: 16px;
 overflow: hidden;
+border: 1px solid rgba(255, 90, 31, 0.15);
+backdrop-filter: blur(10px);
 margin-bottom: 40px;
 }
 
+.leaderboard-table thead {
+background: linear-gradient(135deg, rgba(255, 90, 31, 0.2) 0%, rgba(255, 61, 46, 0.15) 100%);
+}
+
 .leaderboard-table th, .leaderboard-table td {
-padding: 15px;
+padding: 16px 20px;
 text-align: left;
-border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+border-bottom: 1px solid rgba(255, 90, 31, 0.08);
+transition: all 0.3s ease;
 }
 
 .leaderboard-table th {
-background-color: var(--primary);
-font-weight: 500;
+font-family: 'Orbitron', sans-serif;
+font-size: 13px;
+font-weight: 600;
+text-transform: uppercase;
+letter-spacing: 1.2px;
+color: var(--primary-light);
+border-bottom: 2px solid rgba(255, 90, 31, 0.3);
+}
+
+.leaderboard-table tr:last-child td {
+border-bottom: none;
+}
+
+.leaderboard-table tr:hover td {
+background: linear-gradient(90deg, rgba(255, 90, 31, 0.15) 0%, rgba(255, 90, 31, 0.05) 100%);
+box-shadow: inset 0 0 20px rgba(255, 90, 31, 0.1);
 }
 
 .leaderboard-table tr:hover {
-background-color: rgba(106, 61, 154, 0.1);
+background-color: transparent;
 }
 
 .rank {
@@ -344,48 +293,42 @@ color: var(--secondary);
 }
 }
 </style>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="super-shell.css">
 </head>
 <body>
-<header>
-<div class="container">
-<div class="header-content">
-<div class="logo">
-<span class="logo-icon">⚔️</span>
-<span>Cambria Duel Tracker</span>
-</div>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+<canvas id="wind" aria-hidden="true"></canvas>
+<div class="tech-grid" aria-hidden="true"></div>
+<div class="galaxy-vignette" aria-hidden="true"></div>
 
-<div class="chain-toggle">
-<button class="chain-btn active" data-chain="abstract" onclick="switchChain('abstract')">
-<span class="chain-icon">🟢</span>
-<span>Abstract L2</span>
-</button>
-<button class="chain-btn" data-chain="ronin" onclick="switchChain('ronin')">
-<span class="chain-icon">⚔️</span>
-<span>Ronin</span>
-</button>
-</div>
-
-<nav>
-<ul>
+<header class="navbar" role="banner">
+<div class="container nav-container">
+<a href="index.html" class="logo"><img src="assets/cambria-emblem.png" alt="" class="logo-mark" width="44" height="44" decoding="async" /><span class="electric-text-wrap electric-text-wrap--nav"><span class="electric-text electric-text--nav">Cambria Duel Arena Data</span></span></a>
+<button type="button" class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links"><span></span><span></span><span></span></button>
+<nav aria-label="Main navigation">
+<ul class="nav-links" id="nav-links">
 <li><a href="index.html">Home</a></li>
-<li><a href="leaderboard.html">Leaderboard</a></li>
+<li><a href="wallet.html">Wallet</a></li>
+<li><a href="leaderboard.html" class="active">Leaderboard</a></li>
 <li><a href="statistics.html">Statistics</a></li>
 <li><a href="about.html">About</a></li>
 <li><a href="donate.html">Donate</a></li>
 </ul>
 </nav>
 </div>
-</div>
 </header>
 
-<section class="hero">
-<div class="container">
+<section class="hero hero-super hero-super--compact">
+<div class="hero-glow hero-glow-1" aria-hidden="true"></div>
+<div class="hero-glow hero-glow-2" aria-hidden="true"></div>
+<div class="container hero-inner">
 <h1>Duel Arena Leaderboard</h1>
 <p>Top performers in the Cambria Duel Arena ranked by profit and win rate</p>
 </div>
 </section>
 
-<main class="container">
+<main class="container" id="main-content">
 <div class="leaderboard-filters">
 <button class="filter-btn active" data-filter="profit">Top Profit</button>
 <button class="filter-btn" data-filter="wins">Most Wins</button>
@@ -408,94 +351,7 @@ color: var(--secondary);
 </thead>
 <tbody>
 <tr>
-<td><span class="rank rank-1">1</span></td>
-<td class="wallet-address">0x8a34c7a0...b2d1f</td>
-<td class="profit">8.200 ETH</td>
-<td class="profit">+0.412 ETH</td>
-<td class="win-rate">60.6%</td>
-<td>142</td>
-<td>4.582 ETH</td>
-</tr>
-<tr>
-<td><span class="rank rank-2">2</span></td>
-<td class="wallet-address">0xab45f1c2...d67b9</td>
-<td class="profit">7.800 ETH</td>
-<td class="profit">+0.390 ETH</td>
-<td class="win-rate">58.2%</td>
-<td>156</td>
-<td>5.120 ETH</td>
-</tr>
-<tr>
-<td><span class="rank rank-3">3</span></td>
-<td class="wallet-address">0xcf89d1e0...a43e2</td>
-<td class="profit">6.480 ETH</td>
-<td class="profit">+0.324 ETH</td>
-<td class="win-rate">55.8%</td>
-<td>134</td>
-<td>3.890 ETH</td>
-</tr>
-<tr>
-<td><span class="rank">4</span></td>
-<td class="wallet-address">0x329a7b10...e89c4</td>
-<td class="profit">5.620 ETH</td>
-<td class="profit">+0.281 ETH</td>
-<td class="win-rate">62.1%</td>
-<td>98</td>
-<td>2.740 ETH</td>
-</tr>
-<tr>
-<td><span class="rank">5</span></td>
-<td class="wallet-address">0x7f2e8b45...c91d3</td>
-<td class="profit">4.760 ETH</td>
-<td class="profit">+0.238 ETH</td>
-<td class="win-rate">57.3%</td>
-<td>125</td>
-<td>3.210 ETH</td>
-</tr>
-<tr>
-<td><span class="rank">6</span></td>
-<td class="wallet-address">0x4d6a9c12...f84e7</td>
-<td class="profit">4.500 ETH</td>
-<td class="profit">+0.225 ETH</td>
-<td class="win-rate">59.4%</td>
-<td>112</td>
-<td>2.890 ETH</td>
-</tr>
-<tr>
-<td><span class="rank">7</span></td>
-<td class="wallet-address">0x9e3b7f28...a65c1</td>
-<td class="profit">3.900 ETH</td>
-<td class="profit">+0.195 ETH</td>
-<td class="win-rate">54.7%</td>
-<td>108</td>
-<td>2.650 ETH</td>
-</tr>
-<tr>
-<td><span class="rank">8</span></td>
-<td class="wallet-address">0x2c8d4e76...b93f5</td>
-<td class="profit">3.440 ETH</td>
-<td class="profit">+0.172 ETH</td>
-<td class="win-rate">56.9%</td>
-<td>95</td>
-<td>2.340 ETH</td>
-</tr>
-<tr>
-<td><span class="rank">9</span></td>
-<td class="wallet-address">0x6f1a5c89...d72e8</td>
-<td class="profit">3.180 ETH</td>
-<td class="profit">+0.159 ETH</td>
-<td class="win-rate">58.1%</td>
-<td>89</td>
-<td>2.180 ETH</td>
-</tr>
-<tr>
-<td><span class="rank">10</span></td>
-<td class="wallet-address">0x5b9e2d47...c84a6</td>
-<td class="profit">2.780 ETH</td>
-<td class="profit">+0.139 ETH</td>
-<td class="win-rate">55.2%</td>
-<td>87</td>
-<td>2.050 ETH</td>
+<td colspan="7" style="text-align: center; color: var(--text-secondary);">Loading leaderboard…</td>
 </tr>
 </tbody>
 </table>
@@ -505,16 +361,14 @@ color: var(--secondary);
 <div class="container">
 <div class="footer-content">
 <div class="logo">
-<span class="logo-icon">⚔️</span>
-<span>Cambria Duel Tracker</span>
+<img src="assets/cambria-emblem.png" alt="" class="logo-mark" width="36" height="36" decoding="async" />
+<span>Cambria Duel Arena Data</span>
 </div>
 <p>Track and analyze Cambria Duel Arena data on the Abstract L2 chain</p>
 <div class="social-links">
-<a href="#"><span>𝕏</span></a>
-<a href="#"><span>𝐌</span></a>
-<a href="#"><span>𝐆</span></a>
+<a href="https://x.com/playdegenarena" target="_blank" rel="noopener noreferrer"><span>𝕏</span></a>
 </div>
-<p>© 2023 Cambria Duel Tracker. Not affiliated with @playcambria.</p>
+<p>© 2023 Cambria Duel Arena Data. Not affiliated with @playcambria.</p>
 </div>
 </div>
 </footer>
@@ -522,8 +376,6 @@ color: var(--secondary);
 <script>
 // Cambria Duel Arena Leaderboard - Smart Contract Integration
 document.addEventListener('DOMContentLoaded', function() {
-    // Load saved theme first
-    loadSavedTheme();
     initializeLeaderboard();
 });
 
@@ -535,8 +387,9 @@ async function initializeLeaderboard() {
             console.log('Web3 initialized for leaderboard');
         }
     } catch (error) {
-        console.log('Web3 initialization failed, using mock data:', error);
+        console.log('Web3 initialization failed (RPC optional if API is up):', error);
     }
+    await window.cambriaWeb3.waitForApiServerCheck();
     
     // Set up event listeners
     setupEventListeners();
@@ -571,64 +424,16 @@ function setupEventListeners() {
 async function loadLeaderboardData(sortBy = 'profit') {
     try {
         setLoadingState(true);
-        
-        let leaderboardData;
-        
-        // Try to get data from smart contracts first
-        if (window.cambriaWeb3.isConnected) {
-            leaderboardData = await window.cambriaWeb3.getLeaderboardData(sortBy);
-        } else {
-            // Fallback to mock data
-            leaderboardData = getMockLeaderboardData(sortBy);
-        }
-        
+        await window.cambriaWeb3.waitForApiServerCheck();
+        const leaderboardData = await window.cambriaWeb3.getLeaderboardData(sortBy);
         updateTable(leaderboardData);
-        
     } catch (error) {
         console.error('Error loading leaderboard data:', error);
-        // Fallback to mock data
-        const mockData = getMockLeaderboardData(sortBy);
-        updateTable(mockData);
-        window.cambriaWeb3.showError('Failed to load live data. Showing cached data.');
+        updateTable([]);
+        window.cambriaWeb3.showError('Failed to load leaderboard. Run `node server.js` with an indexed SQLite DB.');
     } finally {
         setLoadingState(false);
     }
-}
-
-function getMockLeaderboardData(sortBy) {
-    // Mock data with corrected fee calculations
-    const mockData = {
-        profit: [
-            { rank: 1, wallet: '0x8a34c7a0...b2d1f', totalETHWon: '8.200 ETH', profit: '+0.412 ETH', winRate: '60.6%', duels: 142, volume: '4.582 ETH' },
-            { rank: 2, wallet: '0xab45f1c2...d67b9', totalETHWon: '7.800 ETH', profit: '+0.390 ETH', winRate: '58.2%', duels: 156, volume: '5.120 ETH' },
-            { rank: 3, wallet: '0xcf89d1e0...a43e2', totalETHWon: '6.480 ETH', profit: '+0.324 ETH', winRate: '55.8%', duels: 134, volume: '3.890 ETH' },
-            { rank: 4, wallet: '0x329a7b10...e89c4', totalETHWon: '5.620 ETH', profit: '+0.281 ETH', winRate: '62.1%', duels: 98, volume: '2.740 ETH' },
-            { rank: 5, wallet: '0x6f1a5c89...d72e8', totalETHWon: '3.180 ETH', profit: '+0.159 ETH', winRate: '58.1%', duels: 89, volume: '2.180 ETH' }
-        ],
-        wins: [
-            { rank: 1, wallet: '0xab45f1c2...d67b9', totalETHWon: '7.800 ETH', profit: '+0.390 ETH', winRate: '58.2%', duels: 156, volume: '5.120 ETH' },
-            { rank: 2, wallet: '0x8a34c7a0...b2d1f', totalETHWon: '8.200 ETH', profit: '+0.412 ETH', winRate: '60.6%', duels: 142, volume: '4.582 ETH' },
-            { rank: 3, wallet: '0xcf89d1e0...a43e2', totalETHWon: '6.480 ETH', profit: '+0.324 ETH', winRate: '55.8%', duels: 134, volume: '3.890 ETH' },
-            { rank: 4, wallet: '0x329a7b10...e89c4', totalETHWon: '5.620 ETH', profit: '+0.281 ETH', winRate: '62.1%', duels: 98, volume: '2.740 ETH' },
-            { rank: 5, wallet: '0x6f1a5c89...d72e8', totalETHWon: '3.180 ETH', profit: '+0.159 ETH', winRate: '58.1%', duels: 89, volume: '2.180 ETH' }
-        ],
-        winrate: [
-            { rank: 1, wallet: '0x329a7b10...e89c4', totalETHWon: '5.620 ETH', profit: '+0.281 ETH', winRate: '62.1%', duels: 98, volume: '2.740 ETH' },
-            { rank: 2, wallet: '0x8a34c7a0...b2d1f', totalETHWon: '8.200 ETH', profit: '+0.412 ETH', winRate: '60.6%', duels: 142, volume: '4.582 ETH' },
-            { rank: 3, wallet: '0x6f1a5c89...d72e8', totalETHWon: '3.180 ETH', profit: '+0.159 ETH', winRate: '58.1%', duels: 89, volume: '2.180 ETH' },
-            { rank: 4, wallet: '0xab45f1c2...d67b9', totalETHWon: '7.800 ETH', profit: '+0.390 ETH', winRate: '58.2%', duels: 156, volume: '5.120 ETH' },
-            { rank: 5, wallet: '0xcf89d1e0...a43e2', totalETHWon: '6.480 ETH', profit: '+0.324 ETH', winRate: '55.8%', duels: 134, volume: '3.890 ETH' }
-        ],
-        volume: [
-            { rank: 1, wallet: '0xab45f1c2...d67b9', totalETHWon: '7.800 ETH', profit: '+0.390 ETH', winRate: '58.2%', duels: 156, volume: '5.120 ETH' },
-            { rank: 2, wallet: '0x8a34c7a0...b2d1f', totalETHWon: '8.200 ETH', profit: '+0.412 ETH', winRate: '60.6%', duels: 142, volume: '4.582 ETH' },
-            { rank: 3, wallet: '0xcf89d1e0...a43e2', totalETHWon: '6.480 ETH', profit: '+0.324 ETH', winRate: '55.8%', duels: 134, volume: '3.890 ETH' },
-            { rank: 4, wallet: '0x329a7b10...e89c4', totalETHWon: '5.620 ETH', profit: '+0.281 ETH', winRate: '62.1%', duels: 98, volume: '2.740 ETH' },
-            { rank: 5, wallet: '0x6f1a5c89...d72e8', totalETHWon: '3.180 ETH', profit: '+0.159 ETH', winRate: '58.1%', duels: 89, volume: '2.180 ETH' }
-        ]
-    };
-    
-    return mockData[sortBy] || mockData.profit;
 }
 
 function updateTable(data) {
@@ -637,15 +442,16 @@ function updateTable(data) {
     tbody.innerHTML = '';
     
     if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No leaderboard data available</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">No leaderboard data yet. Indexer must capture on-chain duels first.</td></tr>';
         return;
     }
     
     data.forEach(player => {
         const row = document.createElement('tr');
+        const full = player.walletFull ? ` title="${player.walletFull}"` : '';
         row.innerHTML = `
             <td><span class="rank rank-${player.rank <= 3 ? player.rank : ''}">${player.rank}</span></td>
-            <td class="wallet-address">${player.wallet}</td>
+            <td class="wallet-address"${full}>${player.wallet}</td>
             <td class="profit">${player.totalETHWon}</td>
             <td class="profit">${player.profit}</td>
             <td class="win-rate">${player.winRate}</td>
@@ -659,7 +465,7 @@ function updateTable(data) {
 function setupRealTimeUpdates() {
     // Set up periodic data refresh
     setInterval(async () => {
-        if (window.cambriaWeb3.isConnected) {
+        if (window.cambriaWeb3.isConnected || window.cambriaWeb3.useApiServer) {
             const activeFilter = document.querySelector('.filter-btn.active');
             if (activeFilter) {
                 const filter = activeFilter.dataset.filter;
@@ -718,104 +524,10 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
-
-// Chain switching functionality
-function switchChain(chain) {
-    if (CONFIG.switchChain(chain)) {
-        // Update UI
-        document.querySelectorAll('.chain-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector(`[data-chain="${chain}"]`).classList.add('active');
-        
-        // Update web3 connection
-        if (window.cambriaWeb3) {
-            window.cambriaWeb3.updateChainConfig();
-        }
-        
-        // Update chain-specific text
-        updateChainSpecificText();
-        
-        // Refresh data
-        if (typeof loadLeaderboardData === 'function') {
-            loadLeaderboardData();
-        }
-        
-        // Show notification
-        showNotification(`Switched to ${CONFIG.getCurrentChain().CHAIN_NAME}`, 'success');
-    }
-}
-
-// Load saved theme on page load
-function loadSavedTheme() {
-    if (CONFIG.loadTheme()) {
-        // Update UI to reflect saved theme
-        document.querySelectorAll('.chain-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector(`[data-chain="${CONFIG.ACTIVE_CHAIN}"]`).classList.add('active');
-        
-        // Update chain-specific text
-        updateChainSpecificText();
-    }
-}
-
-// Update chain-specific text throughout the page
-function updateChainSpecificText() {
-    const currentChain = CONFIG.getCurrentChain();
-    const chainName = currentChain.CHAIN_NAME;
-    
-    // Update page title
-    const pageTitle = document.querySelector('h1');
-    if (pageTitle) {
-        pageTitle.textContent = `Leaderboard - ${chainName}`;
-    }
-    
-    // Update transaction link text
-    const txLinks = document.querySelectorAll('.tx-link');
-    txLinks.forEach(link => {
-        link.textContent = `🔗 View Transaction on ${chainName}`;
-    });
-}
-
-// Show notification
-function showNotification(message, type = 'info') {
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.textContent = message;
-    
-    // Style the notification
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: var(--primary);
-        color: white;
-        padding: 12px 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        z-index: 1000;
-        font-weight: 500;
-        transform: translateX(100%);
-        transition: transform 0.3s ease;
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Animate in
-    setTimeout(() => {
-        notification.style.transform = 'translateX(0)';
-    }, 100);
-    
-    // Remove after 3 seconds
-    setTimeout(() => {
-        notification.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-            document.body.removeChild(notification);
-        }, 300);
-    }, 3000);
-}
 </script>
+<script src="super-fx.js"></script>
+<script src="theme-animations.js"></script>
 </body>
 </html>
+
+

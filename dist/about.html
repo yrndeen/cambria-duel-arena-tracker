@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>About - Cambria Duel Arena Tracker</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="assets/cambria-emblem.png" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/cambria-emblem.png">
+<title>About — Cambria Duel Arena Data</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Rajdhani:wght@400;500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
 /* Red theme (default) */
@@ -41,7 +43,7 @@ padding: 0 20px;
 
 header {
 background: linear-gradient(to right, var(--primary-dark), var(--primary));
-padding: 20px 0;
+padding: 12px 0;
 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 position: sticky;
 top: 0;
@@ -52,81 +54,6 @@ z-index: 100;
 display: flex;
 justify-content: space-between;
 align-items: center;
-}
-
-.chain-toggle {
-display: flex;
-gap: 12px;
-margin: 0 20px;
-background: var(--dark-lighter);
-padding: 6px;
-border-radius: 12px;
-border: 1px solid var(--border);
-}
-
-.chain-btn {
-background: transparent;
-border: none;
-color: var(--text-secondary);
-padding: 10px 18px;
-border-radius: 8px;
-cursor: pointer;
-transition: all 0.3s ease;
-display: flex;
-align-items: center;
-gap: 8px;
-font-size: 14px;
-font-weight: 600;
-position: relative;
-overflow: hidden;
-}
-
-.chain-btn::before {
-content: '';
-position: absolute;
-top: 0;
-left: 0;
-right: 0;
-bottom: 0;
-background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-opacity: 0;
-transition: opacity 0.3s ease;
-border-radius: 8px;
-}
-
-.chain-btn:hover::before {
-opacity: 0.1;
-}
-
-.chain-btn:hover {
-color: var(--text);
-transform: translateY(-1px);
-}
-
-.chain-btn.active {
-background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-color: white;
-box-shadow: 0 4px 12px rgba(106, 61, 154, 0.3);
-}
-
-.chain-btn.active:hover {
-transform: translateY(-2px);
-box-shadow: 0 6px 16px rgba(106, 61, 154, 0.4);
-}
-
-.chain-btn.active::before {
-opacity: 0;
-}
-
-.chain-icon {
-font-size: 18px;
-position: relative;
-z-index: 1;
-}
-
-.chain-btn span:last-child {
-position: relative;
-z-index: 1;
 }
 
 .logo {
@@ -164,10 +91,14 @@ nav ul li a:hover {
 color: var(--secondary);
 }
 
+.nav-toggle {
+display: none;
+}
+
 .hero {
 text-align: center;
 padding: 60px 0;
-background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%234a2a75"/><path d="M0 0L100 100" stroke="%236a3d9a" stroke-width="2"/><path d="M100 0L0 100" stroke="%236a3d9a" stroke-width="2"/></svg>');
+background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23201210"/><path d="M0 0L100 100" stroke="%23ff5a1f" stroke-width="2"/><path d="M100 0L0 100" stroke="%23ff5a1f" stroke-width="2"/></svg>');
 background-size: cover;
 margin-bottom: 40px;
 }
@@ -214,7 +145,7 @@ margin: 40px 0;
 }
 
 .feature-card {
-background-color: rgba(106, 61, 154, 0.2);
+background-color: rgba(255, 90, 31, 0.16);
 border-radius: 8px;
 padding: 30px;
 text-align: center;
@@ -353,6 +284,36 @@ flex-direction: column;
 
 nav ul {
 margin-top: 20px;
+display: none;
+flex-direction: column;
+width: 100%;
+}
+
+nav ul.nav-active {
+display: flex;
+}
+
+nav ul li {
+margin: 10px 0;
+}
+
+.nav-toggle {
+display: flex;
+flex-direction: column;
+justify-content: center;
+gap: 5px;
+background: none;
+border: none;
+cursor: pointer;
+padding: 5px;
+}
+
+.nav-toggle span {
+width: 25px;
+height: 3px;
+background-color: var(--text);
+border-radius: 2px;
+transition: all 0.3s;
 }
 
 .feature-grid {
@@ -365,51 +326,45 @@ align-items: center;
 }
 }
 </style>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="super-shell.css">
 </head>
 <body>
-<header>
-<div class="container">
-<div class="header-content">
-<div class="logo">
-<span class="logo-icon">⚔️</span>
-<span>Cambria Duel Tracker</span>
-</div>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+<canvas id="wind" aria-hidden="true"></canvas>
+<div class="tech-grid" aria-hidden="true"></div>
+<div class="galaxy-vignette" aria-hidden="true"></div>
 
-<div class="chain-toggle">
-<button class="chain-btn active" data-chain="abstract" onclick="switchChain('abstract')">
-<span class="chain-icon">🟢</span>
-<span>Abstract L2</span>
-</button>
-<button class="chain-btn" data-chain="ronin" onclick="switchChain('ronin')">
-<span class="chain-icon">⚔️</span>
-<span>Ronin</span>
-</button>
-</div>
-
-<nav>
-<ul>
+<header class="navbar" role="banner">
+<div class="container nav-container">
+<a href="index.html" class="logo"><img src="assets/cambria-emblem.png" alt="" class="logo-mark" width="44" height="44" decoding="async" /><span class="electric-text-wrap electric-text-wrap--nav"><span class="electric-text electric-text--nav">Cambria Duel Arena Data</span></span></a>
+<button type="button" class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links"><span></span><span></span><span></span></button>
+<nav aria-label="Main navigation">
+<ul class="nav-links" id="nav-links">
 <li><a href="index.html">Home</a></li>
+<li><a href="wallet.html">Wallet</a></li>
 <li><a href="leaderboard.html">Leaderboard</a></li>
 <li><a href="statistics.html">Statistics</a></li>
-<li><a href="about.html">About</a></li>
+<li><a href="about.html" class="active">About</a></li>
 <li><a href="donate.html">Donate</a></li>
 </ul>
 </nav>
 </div>
-</div>
 </header>
 
-<section class="hero">
-<div class="container">
-<h1>About Cambria Duel Tracker</h1>
+<section class="hero hero-super hero-super--compact">
+<div class="hero-glow hero-glow-1" aria-hidden="true"></div>
+<div class="hero-glow hero-glow-2" aria-hidden="true"></div>
+<div class="container hero-inner">
+<h1>About Cambria Duel Arena Data</h1>
 <p>Your comprehensive analytics platform for the Cambria Duel Arena on Abstract L2</p>
 </div>
 </section>
 
-<main class="container">
+<main class="container" id="main-content">
 <section class="content-section">
 <h2 class="section-title">Our Mission</h2>
-<p>Cambria Duel Tracker is an independent analytics platform designed to provide comprehensive insights into the Cambria Duel Arena ecosystem. We aim to empower players with detailed statistics, performance tracking, and market analysis to help them make informed decisions in the arena.</p>
+<p>Cambria Duel Arena Data is an independent analytics platform designed to provide comprehensive insights into the Cambria Duel Arena ecosystem. We aim to empower players with detailed statistics, performance tracking, and market analysis to help them make informed decisions in the arena.</p>
 <p>Built by the community, for the community, we're committed to transparency and providing the most accurate and up-to-date information about duel performance, player statistics, and ecosystem trends.</p>
 </section>
 
@@ -479,42 +434,77 @@ align-items: center;
 <p>Our platform tracks all these events in real-time, showing you the current status of each duel and providing detailed transaction history.</p>
 </section>
 
-<section class="content-section">
-<h2 class="section-title">Duel Arena Fee Structure</h2>
-<p>The Cambria Duel Arena operates on a simple but important fee structure that affects all profit calculations:</p>
-<ul style="margin-left: 20px; color: var(--text-secondary);">
-<li><strong>Equal Wagers:</strong> Both players must wager the same amount of ETH</li>
-<li><strong>Winner Takes All:</strong> The winner receives both wagers (2x the duel amount)</li>
-<li><strong>5% Platform Fee:</strong> Winners pay a 5% fee on the total winnings</li>
-<li><strong>Net Profit Calculation:</strong> Winner's net profit = (2 × wager) - (0.05 × 2 × wager) = 1.9 × wager</li>
-</ul>
-<p><strong>Example:</strong> In a 0.01 ETH duel, the winner claims 0.02 ETH but pays 0.001 ETH in fees, resulting in a net profit of 0.019 ETH.</p>
-<p>All profit calculations on this platform reflect net profits after the 5% fee deduction, giving you the most accurate picture of actual earnings.</p>
-</section>
+
 
 <section class="content-section">
 <h2 class="section-title">Disclaimer</h2>
-<p>Cambria Duel Tracker is an independent project and is not affiliated with, endorsed by, or sponsored by @playcambria or any official Cambria entities. This platform is provided for informational purposes only.</p>
+<p>Cambria Duel Arena Data is an independent project and is not affiliated with, endorsed by, or sponsored by @playcambria or any official Cambria entities. This platform is provided for informational purposes only.</p>
 <p>Users should conduct their own research and due diligence before making any decisions based on the information provided on this platform. Past performance does not guarantee future results, and all duel activities carry inherent risks.</p>
 </section>
 
 <section class="contact-section">
-<h2 class="section-title">Get In Touch</h2>
-<p>Have questions, suggestions, or want to report an issue? We'd love to hear from you!</p>
-<div class="contact-links">
-<a href="#" class="contact-link">
-<span class="contact-icon">𝕏</span>
-<span>Follow us on X</span>
-</a>
-<a href="#" class="contact-link">
-<span class="contact-icon">📧</span>
-<span>Send us an email</span>
-</a>
-<a href="#" class="contact-link">
-<span class="contact-icon">💬</span>
-<span>Join our Discord</span>
-</a>
+<h2 class="section-title">Report Bugs / Give Suggestions</h2>
+
+<!-- Web3Forms Integration - Replace YOUR_FORM_ID with your actual Web3Forms form ID -->
+<form id="contactForm" style="max-width: 600px; margin: 30px auto; padding: 30px; background-color: rgba(255, 90, 31, 0.1); border-radius: 8px; border: 1px solid rgba(255, 90, 31, 0.3);">
+<div style="margin-bottom: 20px;">
+<label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--secondary);">Username</label>
+<input type="text" name="username" required style="width: 100%; padding: 12px; border: 1px solid rgba(255, 90, 31, 0.5); border-radius: 4px; background-color: var(--dark-light); color: var(--text); font-size: 14px;">
 </div>
+
+<div style="margin-bottom: 20px;">
+<label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--secondary);">Subject</label>
+<input type="text" name="subject" required style="width: 100%; padding: 12px; border: 1px solid rgba(255, 90, 31, 0.5); border-radius: 4px; background-color: var(--dark-light); color: var(--text); font-size: 14px;">
+</div>
+
+<div style="margin-bottom: 20px;">
+<label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--secondary);">Message</label>
+<textarea name="message" required rows="5" style="width: 100%; padding: 12px; border: 1px solid rgba(255, 90, 31, 0.5); border-radius: 4px; background-color: var(--dark-light); color: var(--text); font-size: 14px; resize: vertical;"></textarea>
+</div>
+
+<input type="hidden" name="access_key" value="4a564136-b3e1-440b-8bd0-37303367e9f2">
+<input type="hidden" name="from_name" value="Cambria Duel Arena Contact Form">
+
+<button type="submit" style="width: 100%; padding: 15px; background: linear-gradient(to right, var(--primary-dark), var(--primary)); color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+Send Message
+</button>
+
+<p id="formStatus" style="margin-top: 15px; text-align: center; font-size: 14px;"></p>
+</form>
+
+<script>
+document.getElementById('contactForm').addEventListener('submit', function(e) {
+e.preventDefault();
+
+const form = e.target;
+const formData = new FormData(form);
+const statusEl = document.getElementById('formStatus');
+
+statusEl.textContent = 'Sending...';
+statusEl.style.color = 'var(--text-secondary)';
+
+fetch('https://api.web3forms.com/submit', {
+method: 'POST',
+body: formData
+})
+.then(response => response.json())
+.then(data => {
+if (data.success) {
+statusEl.textContent = 'Message sent successfully! Thank you for contacting us.';
+statusEl.style.color = 'var(--success)';
+form.reset();
+} else {
+statusEl.textContent = 'Failed to send message. Please try again.';
+statusEl.style.color = 'var(--danger)';
+}
+})
+.catch(error => {
+console.error('Error:', error);
+statusEl.textContent = 'Failed to send message. Please try again.';
+statusEl.style.color = 'var(--danger)';
+});
+});
+</script>
 </section>
 </main>
 
@@ -522,113 +512,33 @@ align-items: center;
 <div class="container">
 <div class="footer-content">
 <div class="logo">
-<span class="logo-icon">⚔️</span>
-<span>Cambria Duel Tracker</span>
+<img src="assets/cambria-emblem.png" alt="" class="logo-mark" width="36" height="36" decoding="async" />
+<span>Cambria Duel Arena Data</span>
 </div>
 <p>Track and analyze Cambria Duel Arena data on the Abstract L2 chain</p>
 <div class="social-links">
-<a href="#"><span>𝕏</span></a>
-<a href="#"><span>𝐌</span></a>
-<a href="#"><span>𝐆</span></a>
+<a href="https://x.com/playdegenarena" target="_blank" rel="noopener noreferrer"><span>𝕏</span></a>
 </div>
-<p>© 2023 Cambria Duel Tracker. Not affiliated with @playcambria.</p>
+<p>© 2023 Cambria Duel Arena Data. Not affiliated with @playcambria.</p>
 </div>
 </div>
 </footer>
-
+<script src="super-fx.js"></script>
+<script src="theme-animations.js"></script>
 <script>
-// Chain switching functionality
-function switchChain(chain) {
-    if (CONFIG.switchChain(chain)) {
-        // Update UI
-        document.querySelectorAll('.chain-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector(`[data-chain="${chain}"]`).classList.add('active');
-        
-        // Update chain-specific text
-        updateChainSpecificText();
-        
-        // Show notification
-        showNotification(`Switched to ${CONFIG.getCurrentChain().CHAIN_NAME}`, 'success');
-    }
-}
+// Mobile navigation toggle
+const navToggle = document.querySelector('.nav-toggle');
+const navLinks = document.getElementById('nav-links');
 
-// Load saved theme on page load
-function loadSavedTheme() {
-    if (CONFIG.loadTheme()) {
-        // Update UI to reflect saved theme
-        document.querySelectorAll('.chain-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector(`[data-chain="${CONFIG.ACTIVE_CHAIN}"]`).classList.add('active');
-        
-        // Update chain-specific text
-        updateChainSpecificText();
-    }
-}
-
-// Update chain-specific text throughout the page
-function updateChainSpecificText() {
-    const currentChain = CONFIG.getCurrentChain();
-    const chainName = currentChain.CHAIN_NAME;
-    
-    // Update page title
-    const pageTitle = document.querySelector('h1');
-    if (pageTitle) {
-        pageTitle.textContent = `About - ${chainName}`;
-    }
-    
-    // Update how it works section
-    const howItWorks = document.querySelector('.content-section p');
-    if (howItWorks && howItWorks.textContent.includes('Abstract L2')) {
-        howItWorks.textContent = `Our platform connects directly to the ${chainName} blockchain to fetch real-time data from the Cambria Duel Arena smart contracts. We process and analyze this data to provide:`;
-    }
-}
-
-// Show notification
-function showNotification(message, type = 'info') {
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.textContent = message;
-    
-    // Style the notification
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: var(--primary);
-        color: white;
-        padding: 12px 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        z-index: 1000;
-        font-weight: 500;
-        transform: translateX(100%);
-        transition: transform 0.3s ease;
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Animate in
-    setTimeout(() => {
-        notification.style.transform = 'translateX(0)';
-    }, 100);
-    
-    // Remove after 3 seconds
-    setTimeout(() => {
-        notification.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-            document.body.removeChild(notification);
-        }, 300);
-    }, 3000);
-}
-
-// Load saved theme on page load
-document.addEventListener('DOMContentLoaded', function() {
-    loadSavedTheme();
+if (navToggle) {
+navToggle.addEventListener('click', function() {
+const isExpanded = this.getAttribute('aria-expanded') === 'true';
+this.setAttribute('aria-expanded', !isExpanded);
+navLinks.classList.toggle('nav-active');
 });
+}
 </script>
 </body>
 </html>
+
+

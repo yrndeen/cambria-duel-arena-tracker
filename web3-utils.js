@@ -11,7 +11,7 @@ class CambriaWeb3 {
         this.cache = {
             walletStats: new Map(),
             duelHistory: new Map(),
-            liveFeed: null,
+            liveFeed: new Map(),
             duelTransactions: new Map()
         };
         this.cacheExpiry = {
@@ -22,72 +22,84 @@ class CambriaWeb3 {
         };
         this.loadCacheFromLocalStorage();
         
-        // API server configuration
-        this.useApiServer = false;
-        this.apiBaseUrl = 'http://localhost:3000/api';
+// API server configuration
+this.useApiServer = false;
+this.apiBaseUrl = 'http://localhost:3000/api';
+this.useStaticData = false; // Set to true to use static JSON export
         
-        // Check if API server is available
-        this.checkApiServer();
-        
-        // Initialize with current chain config
-        this.updateChainConfig();
+        // Check if API server is available (await waitForApiServerCheck() before first reads if needed)
+        this._apiServerCheckPromise = this.checkApiServer();
+    }
+
+    async waitForApiServerCheck(timeoutMs = 10000) {
+        try {
+            await Promise.race([
+                this._apiServerCheckPromise,
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('api_check_timeout')), timeoutMs)
+                )
+            ]);
+        } catch {
+            /* useApiServer reflects last checkApiServer outcome */
+        }
     }
     
-    // Check if API server is available
-    async checkApiServer() {
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/live-feed?limit=1`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            if (response.ok) {
-                console.log('API server is available, using it for data fetching');
-                this.useApiServer = true;
-            }
-        } catch (error) {
-            console.log('API server not available, using direct blockchain queries');
-            this.useApiServer = false;
-        }
-    }
+// Check if API server is available
+async checkApiServer() {
+try {
+const response = await fetch(`${this.apiBaseUrl}/live-feed?page=1&limit=1&includeClaimed=1`, {
+method: 'GET',
+headers: {
+'Content-Type': 'application/json'
+}
+});
 
-    // Update chain configuration
-    updateChainConfig() {
-        const currentChain = CONFIG.getCurrentChain();
-        this.currentChain = currentChain;
-        this.currentContracts = CONFIG.getCurrentContracts();
-        
-        // Update provider if it exists
-        if (this.provider) {
-            this.provider = new ethers.providers.JsonRpcProvider(currentChain.RPC_URL);
-        }
-        
-        // Clear cache when switching chains
-        this.clearCache();
-        
-        console.log(`Switched to ${currentChain.CHAIN_NAME} chain`);
-    }
+if (response.ok) {
+console.log('✅ API server detected');
+this.useApiServer = true;
+return;
+}
+} catch (error) {
+// API server not available
+}
 
-    // Initialize Web3 connection (read-only mode)
-    async initialize() {
-        try {
-            // Use current chain RPC endpoint for read-only access
-            this.provider = new ethers.providers.JsonRpcProvider(this.currentChain.RPC_URL);
-            
-            // Initialize contracts
-            await this.initializeContracts();
-            
-            this.isConnected = true;
-            console.log('Web3 initialized successfully (read-only mode)');
-            return true;
-        } catch (error) {
-            console.error('Web3 initialization failed:', error);
-            this.showError(CONFIG.ERRORS.NETWORK_ERROR);
-            return false;
-        }
-    }
+// Try fetching static JSON data
+try {
+const staticResponse = await fetch('/api/live-feed.json');
+if (staticResponse.ok) {
+const data = await staticResponse.json();
+console.log('✅ Using static data:', data.events?.length || 0, 'events');
+this.useApiServer = false;
+this.staticData = data;
+return;
+}
+} catch (error) {
+// No static data
+}
+
+console.log('⚠️ No API server or static data - using direct RPC');
+this.useApiServer = false;
+this.staticData = null;
+}
+
+// Initialize Web3 connection (read-only mode)
+async initialize() {
+try {
+// Use public RPC endpoint for read-only access
+this.provider = new ethers.providers.JsonRpcProvider(CONFIG.RPC_URL);
+
+// Initialize contracts
+await this.initializeContracts();
+
+this.isConnected = true;
+console.log('Web3 initialized successfully (read-only mode)');
+return true;
+} catch (error) {
+console.warn('Web3 initialization failed (read-only mode only):', error.message);
+// Don't show error on initial load - only needed for wallet interactions
+return false;
+}
+}
 
     // Check if we're on Abstract L2 network
     async checkNetwork() {
@@ -132,15 +144,15 @@ class CambriaWeb3 {
     // Initialize smart contracts
     async initializeContracts() {
         try {
-            // Create contract instances using current chain contracts
+            // Create contract instances
             this.contracts.duelArenaBattle = new ethers.Contract(
-                this.currentContracts.DUEL_ARENA_BATTLE,
+                CONFIG.CONTRACTS.DUEL_ARENA_BATTLE,
                 CONFIG.ABIS.DUEL_ARENA_BATTLE,
                 this.provider
             );
 
             this.contracts.duelArenaEscrow = new ethers.Contract(
-                this.currentContracts.DUEL_ARENA_ESCROW,
+                CONFIG.CONTRACTS.DUEL_ARENA_ESCROW,
                 CONFIG.ABIS.DUEL_ARENA_ESCROW,
                 this.provider
             );
@@ -319,13 +331,13 @@ class CambriaWeb3 {
                 ] = await Promise.all([
                     // Query DuelInitiated events for this wallet as player1
                     this.contracts.duelArenaBattle.queryFilter(
-                        this.contracts.duelArenaBattle.filters.DuelInitiated(null, walletAddress),
+                        this.contracts.duelArenaBattle.filters.DuelInitiated(null, walletAddress, null),
                         startBlock,
                         endBlock
                     ),
                     // Query DuelInitiated events for this wallet as player2
                     this.contracts.duelArenaBattle.queryFilter(
-                        this.contracts.duelArenaBattle.filters.DuelInitiated(walletAddress, null),
+                        this.contracts.duelArenaBattle.filters.DuelInitiated(null, null, walletAddress),
                         startBlock,
                         endBlock
                     ),
@@ -471,39 +483,160 @@ class CambriaWeb3 {
         }
     }
 
-    // Get leaderboard data
+    // Get leaderboard data (indexer API when available; otherwise empty — no fabricated rows)
     async getLeaderboardData(sortBy = 'profit') {
         try {
-            if (!this.isConnected) {
-                throw new Error('Web3 not connected');
+            if (this.useApiServer) {
+                try {
+                    const response = await fetch(
+                        `${this.apiBaseUrl}/leaderboard?sort=${encodeURIComponent(sortBy)}&limit=50`,
+                        {
+                            method: 'GET',
+                            headers: { 'Content-Type': 'application/json' }
+                        }
+                    );
+                    if (response.ok) {
+                        const result = await response.json();
+                        return Array.isArray(result) ? result : [];
+                    }
+                } catch (apiErr) {
+                    console.log('Leaderboard API error:', apiErr);
+                }
             }
 
-            // This would require aggregating data from multiple events
-            // For now, return placeholder data
+            if (!this.isConnected) {
+                return [];
+            }
+
             return [];
         } catch (error) {
             console.error('Error fetching leaderboard data:', error);
-            throw error;
+            return [];
         }
     }
 
-    // Get ecosystem statistics
+    emptyStatisticsPayload() {
+        return {
+            totalDuels: 0,
+            activePlayers: 0,
+            totalVolume: 0,
+            totalETHWon: 0,
+            averageDuelSize: 0,
+            mostCommonDuelAmount: 0,
+            mostCommonPct: 0,
+            largestSingleDuel: 0,
+            largestDuelId: null,
+            totalFees: 0,
+            averageWinRate: null,
+            winRateDistribution: { '40-50%': 0, '50-60%': 0, '60-70%': 0, '70-80%': 0, '80%+': 0 },
+            volumeHistory: Array(10).fill(0),
+            topPerformerWinRate: null,
+            topPerformerAddr: null,
+            source: 'unavailable'
+        };
+    }
+
+    // Get ecosystem statistics (indexer API first; escrow totals only as partial fallback)
     async getEcosystemStats() {
         try {
-            if (!this.isConnected) {
-                throw new Error('Web3 not connected');
+            if (this.useApiServer) {
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/statistics`, {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    if (response.ok) {
+                        return await response.json();
+                    }
+                } catch (apiErr) {
+                    console.log('Statistics API error:', apiErr);
+                }
             }
 
-            // Get total fees collected
+            if (!this.isConnected) {
+                return this.emptyStatisticsPayload();
+            }
+
             const totalFees = await this.contracts.duelArenaEscrow.getTotalFees();
-            
-            return {
-                totalFees: parseFloat(ethers.utils.formatEther(totalFees)),
-                // Additional stats would be calculated from event data
-            };
+            const base = this.emptyStatisticsPayload();
+            base.totalFees = parseFloat(ethers.utils.formatEther(totalFees));
+            base.source = 'escrow_only';
+            return base;
         } catch (error) {
             console.error('Error fetching ecosystem stats:', error);
-            throw error;
+            return this.emptyStatisticsPayload();
+        }
+    }
+
+    /** Map API duel-tx payload to modal-friendly types (server uses slightly different labels). */
+    normalizeDuelTransactionsFromApi(transactions) {
+        if (!Array.isArray(transactions)) return [];
+        return transactions.map((tx) => {
+            if (tx.type === 'Duel Started') {
+                return {
+                    ...tx,
+                    type: 'Duel Initiation',
+                    typeClass: 'duel-initiated',
+                    status: 'Pending',
+                    functionName: 'initBattle',
+                    duelId: String(tx.duelId || tx.duel_id || '')
+                };
+            }
+            if (tx.type === 'Duel Joined') {
+                return {
+                    ...tx,
+                    type: 'Duel Joining',
+                    typeClass: 'duel-joined',
+                    status: 'Active',
+                    functionName: 'joinBattle',
+                    player2: tx.player2 || tx.player,
+                    wager: tx.wager != null && !Number.isNaN(tx.wager) ? tx.wager : 0,
+                    duelId: String(tx.duelId || tx.duel_id || '')
+                };
+            }
+            if (tx.type === 'Duel Completed') {
+                return {
+                    ...tx,
+                    type: 'Duel Completion',
+                    typeClass: 'duel-completed',
+                    status: 'Completed',
+                    functionName: 'claimProceeds',
+                    duelId: String(tx.duelId || tx.duel_id || '')
+                };
+            }
+            if (tx.type === 'Duel Nullified') {
+                return {
+                    ...tx,
+                    type: 'Duel Cancellation',
+                    typeClass: 'duel-nullified',
+                    status: 'Cancelled',
+                    functionName: 'nullifyBattle',
+                    duelId: String(tx.duelId || tx.duel_id || '')
+                };
+            }
+            return tx;
+        });
+    }
+
+    /**
+     * Remove duels that already have ProceedsClaimed on-chain (recent window), so the feed
+     * matches the “open queue” behavior: show work still pending claim, not settled payouts.
+     */
+    async excludeProceedsClaimedDuels(duels) {
+        if (!duels.length) return [];
+        try {
+            const latestBlock = await this.provider.getBlockNumber();
+            const fromBlock = Math.max(0, latestBlock - 100000);
+            const claimedEvents = await this.contracts.duelArenaBattle.queryFilter(
+                this.contracts.duelArenaBattle.filters.ProceedsClaimed(),
+                fromBlock,
+                latestBlock
+            );
+            const claimedIds = new Set(claimedEvents.map((e) => e.args.duelId.toString()));
+            return duels.filter((d) => !claimedIds.has(String(d.id)));
+        } catch (e) {
+            console.warn('excludeProceedsClaimedDuels: could not filter, returning full list', e);
+            return duels;
         }
     }
 
@@ -553,10 +686,17 @@ class CambriaWeb3 {
                 }
             }
             
-            // Sort by creation time (newest first)
-            duels.sort((a, b) => parseInt(b.createdAt) - parseInt(a.createdAt));
-            
-            return duels.slice(0, limit);
+            const includeClaimed =
+                typeof CONFIG !== 'undefined' &&
+                CONFIG.UI &&
+                CONFIG.UI.LIVE_FEED_INCLUDE_CLAIMED !== false;
+            // Sort by creation time (newest first), optionally drop claimed payouts
+            duels.sort((a, b) => parseInt(b.createdAt, 10) - parseInt(a.createdAt, 10));
+            let out = duels;
+            if (!includeClaimed) {
+                out = await this.excludeProceedsClaimedDuels(duels);
+            }
+            return out.slice(0, limit);
             
         } catch (error) {
             console.error('Error fetching recent duel activity from contract:', error);
@@ -564,214 +704,259 @@ class CambriaWeb3 {
         }
     }
 
-    // Get recent duel activity (live feed) with correct duel flow tracking
-    async getRecentDuelActivity(limit = 20) {
+    emptyLiveFeedPage(page, pageSize, total = 0) {
+        const pg = Math.max(1, page);
+        const ps = Math.max(1, pageSize);
+        const totalPages = total > 0 ? Math.ceil(total / ps) : 0;
+        return {
+            total,
+            page: pg,
+            pageSize: ps,
+            totalPages,
+            hasNext: false,
+            hasPrevious: pg > 1,
+            duels: []
+        };
+    }
+
+    normalizeLiveFeedPageResponse(body, pageFallback, pageSizeFallback) {
+        if (Array.isArray(body)) {
+            const duels = body;
+            return {
+                total: duels.length,
+                page: 1,
+                pageSize: duels.length || pageSizeFallback,
+                totalPages: duels.length ? 1 : 0,
+                hasNext: false,
+                hasPrevious: false,
+                duels
+            };
+        }
+        const total = body.total != null ? Number(body.total) : 0;
+        const page = Math.max(1, Number(body.page) || pageFallback);
+        const pageSize = Math.max(1, Number(body.pageSize) || pageSizeFallback);
+        const totalPages =
+            body.totalPages != null
+                ? Number(body.totalPages)
+                : total > 0
+                  ? Math.ceil(total / pageSize)
+                  : 0;
+        return {
+            total,
+            page,
+            pageSize,
+            totalPages,
+            hasNext: Boolean(body.hasNext != null ? body.hasNext : page * pageSize < total),
+            hasPrevious: Boolean(body.hasPrevious != null ? body.hasPrevious : page > 1),
+            duels: Array.isArray(body.duels) ? body.duels : []
+        };
+    }
+
+    /**
+     * Paginated live feed from chain (newest battle id first). Mirrors server RPC helper.
+     */
+    async getLiveFeedPageFromChain({ page, pageSize, includeClaimed }) {
+        const pageNum = Math.max(1, parseInt(String(page), 10) || 1);
+        const size = Math.min(200, Math.max(1, parseInt(String(pageSize), 10) || 100));
+        const offset = (pageNum - 1) * size;
+
+        const nextIdBn = await this.contracts.duelArenaBattle.nextBattleId();
+        const totalBattles = Math.max(0, nextIdBn.toNumber() - 1);
+
+        const ids = [];
+        for (let k = 0; k < size; k++) {
+            const id = totalBattles - offset - k;
+            if (id >= 1) ids.push(id);
+        }
+
+        if (!ids.length) {
+            const totalPagesEmpty = totalBattles > 0 ? Math.ceil(totalBattles / size) : 0;
+            return {
+                total: totalBattles,
+                page: pageNum,
+                pageSize: size,
+                totalPages: totalPagesEmpty,
+                hasNext: pageNum * size < totalBattles,
+                hasPrevious: pageNum > 1,
+                duels: []
+            };
+        }
+
+        const latestBlock = await this.provider.getBlockNumber();
+        const battles = await Promise.all(ids.map((id) => this.contracts.duelArenaBattle.getBattle(id)));
+        const completedLists = await Promise.all(
+            ids.map((id) =>
+                this.contracts.duelArenaBattle.queryFilter(this.contracts.duelArenaBattle.filters.DuelCompleted(id))
+            )
+        );
+
+        let claimedIds = null;
+        if (!includeClaimed) {
+            const claimed = await this.contracts.duelArenaBattle.queryFilter(
+                this.contracts.duelArenaBattle.filters.ProceedsClaimed(),
+                Math.max(0, latestBlock - 500000),
+                latestBlock
+            );
+            claimedIds = new Set(claimed.map((e) => e.args.duelId.toString()));
+        }
+
+        const statusLabels = ['pending', 'active', 'completed', 'cancelled'];
+        const duels = [];
+
+        for (let i = 0; i < ids.length; i++) {
+            const duelId = String(ids[i]);
+            if (claimedIds && claimedIds.has(duelId)) {
+                continue;
+            }
+
+            const b = battles[i];
+            if (!b || b.player1 === ethers.constants.AddressZero) {
+                continue;
+            }
+
+            const statusNum =
+                typeof b.status === 'number'
+                    ? b.status
+                    : b.status != null && typeof b.status.toNumber === 'function'
+                      ? b.status.toNumber()
+                      : Number(b.status);
+            let status = statusLabels[statusNum] || 'unknown';
+            let winner = null;
+            let loser = null;
+            const cev = completedLists[i][0];
+            if (cev) {
+                winner = cev.args.winner;
+                loser = cev.args.loser;
+                status = 'completed';
+            }
+
+            const createdAt = b.createdAt ? b.createdAt.toNumber() : 0;
+
+            duels.push({
+                id: duelId,
+                player1: b.player1,
+                player2: b.player2,
+                wager: parseFloat(ethers.utils.formatEther(b.wager)),
+                winner,
+                loser,
+                status,
+                timestamp: createdAt,
+                transactionHash: cev ? cev.transactionHash : null,
+                blockNumber: createdAt
+            });
+        }
+
+        const totalPages = totalBattles > 0 ? Math.ceil(totalBattles / size) : 0;
+        return {
+            total: totalBattles,
+            page: pageNum,
+            pageSize: size,
+            totalPages,
+            hasNext: offset + ids.length < totalBattles,
+            hasPrevious: pageNum > 1,
+            duels
+        };
+    }
+
+    /**
+     * Paginated duel activity (newest first). Prefer API; else RPC by battle id.
+     * @returns {{ total, page, pageSize, totalPages, hasNext, hasPrevious, duels }}
+     */
+    async getLiveFeedPage({ page = 1, pageSize } = {}) {
         try {
-            // Check cache first
-            const cacheKey = `liveFeed-${limit}`;
-            const cachedLiveFeed = this.getCachedData('liveFeed', cacheKey);
-            if (cachedLiveFeed) {
-                console.log('Using cached live feed data');
-                return cachedLiveFeed;
+            const includeClaimed =
+                typeof CONFIG !== 'undefined' &&
+                CONFIG.UI &&
+                CONFIG.UI.LIVE_FEED_INCLUDE_CLAIMED !== false;
+            const ps =
+                pageSize ||
+                (typeof CONFIG !== 'undefined' && CONFIG.UI && CONFIG.UI.LIVE_FEED_PAGE_SIZE) ||
+                100;
+            const pg = Math.max(1, parseInt(String(page), 10) || 1);
+
+            if (!(this.cache.liveFeed instanceof Map)) {
+                this.cache.liveFeed = new Map();
             }
-            
-            // Try API server first if available
-            if (this.useApiServer) {
-                try {
-                    console.log(`Fetching live feed from API server (limit ${limit})`);
-                    const response = await fetch(`${this.apiBaseUrl}/live-feed?limit=${limit}`, {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
+
+            const cacheKey = `liveFeed-p${pg}-s${ps}-${includeClaimed ? 'all' : 'open'}`;
+            const cached = this.getCachedData('liveFeed', cacheKey);
+            if (cached && Array.isArray(cached.duels)) {
+                console.log('Using cached live feed page');
+                return cached;
+            }
+
+// Use static data if available
+if (this.staticData && this.staticData.events) {
+const ps = pageSize || 100;
+const pg = page || 1;
+const offset = (pg - 1) * ps;
+const paginatedEvents = this.staticData.events.slice(offset, offset + ps);
+
+return {
+total: this.staticData.events.length,
+page: pg,
+pageSize: ps,
+totalPages: Math.ceil(this.staticData.events.length / ps),
+hasNext: offset + ps < this.staticData.events.length,
+hasPrevious: pg > 1,
+duels: paginatedEvents
+};
+}
+
+if (this.useApiServer) {
+try {
+const q = `page=${pg}&limit=${ps}&includeClaimed=${includeClaimed ? '1' : '0'}`;
+const response = await fetch(`${this.apiBaseUrl}/live-feed?${q}`, {
+method: 'GET',
+headers: { 'Content-Type': 'application/json' }
+});
                     if (response.ok) {
-                        const result = await response.json();
-                        
-                        // Cache the result
-                        this.setCachedData('liveFeed', cacheKey, result);
-                        
-                        return result;
-                    } else {
-                        console.log('API server error, falling back to direct contract call');
+                        const body = await response.json();
+                        const normalized = this.normalizeLiveFeedPageResponse(body, pg, ps);
+                        this.setCachedData('liveFeed', cacheKey, normalized);
+                        return normalized;
                     }
+                    console.log('Live feed API error, falling back to chain');
                 } catch (apiError) {
-                    console.log('API server error, falling back to direct contract call:', apiError);
+                    console.log('Live feed API error:', apiError);
                 }
             }
-            
-            // Fall back to direct contract call if API server is not available or fails
+
             if (!this.isConnected) {
-                throw new Error('Web3 not connected');
+                return this.emptyLiveFeedPage(pg, ps);
             }
 
-            // Try the new contract method first
-            try {
-                console.log(`Fetching live feed using contract's getBattle method (limit ${limit})`);
-                const contractResult = await this.getRecentDuelActivityFromContract(limit);
-                
-                if (contractResult && contractResult.length > 0) {
-                    // Cache the result
-                    this.setCachedData('liveFeed', cacheKey, contractResult);
-                    return contractResult;
-                }
-            } catch (contractError) {
-                console.log('Contract method failed, falling back to event-based method:', contractError);
-            }
-
-            try {
-                // Get latest block number
-                const latestBlock = await this.provider.getBlockNumber();
-                const fromBlock = Math.max(0, latestBlock - 10000); // Last 10k blocks for recent activity
-                
-                // Get all relevant events in parallel
-                const [
-                    duelInitiatedEvents,
-                    duelJoinedEvents,
-                    duelCompletedEvents,
-                    duelNullifiedEvents,
-                    proceedsClaimedEvents
-                ] = await Promise.all([
-                    // 1. DuelInitiated events (initBattle function)
-                    this.contracts.duelArenaBattle.queryFilter(
-                        this.contracts.duelArenaBattle.filters.DuelInitiated(),
-                        fromBlock,
-                        latestBlock
-                    ),
-                    // 2. DuelJoined events (joinBattle function)
-                    this.contracts.duelArenaBattle.queryFilter(
-                        this.contracts.duelArenaBattle.filters.DuelJoined(),
-                        fromBlock,
-                        latestBlock
-                    ),
-                    // 3. DuelCompleted events (claimProceeds function)
-                    this.contracts.duelArenaBattle.queryFilter(
-                        this.contracts.duelArenaBattle.filters.DuelCompleted(),
-                        fromBlock,
-                        latestBlock
-                    ),
-                    // 4. DuelNullified events (nullifyBattle function)
-                    this.contracts.duelArenaBattle.queryFilter(
-                        this.contracts.duelArenaBattle.filters.DuelNullified(),
-                        fromBlock,
-                        latestBlock
-                    ),
-                    // 5. ProceedsClaimed events (claimProceeds function)
-                    this.contracts.duelArenaBattle.queryFilter(
-                        this.contracts.duelArenaBattle.filters.ProceedsClaimed(),
-                        fromBlock,
-                        latestBlock
-                    )
-                ]);
-                
-                // Create maps for quick lookup
-                const joinedByDuelId = {};
-                const completedByDuelId = {};
-                const nullifiedByDuelId = {};
-                const claimedByDuelId = {};
-                
-                duelJoinedEvents.forEach(event => {
-                    joinedByDuelId[event.args.duelId.toString()] = event;
-                });
-                
-                duelCompletedEvents.forEach(event => {
-                    completedByDuelId[event.args.duelId.toString()] = event;
-                });
-                
-                duelNullifiedEvents.forEach(event => {
-                    nullifiedByDuelId[event.args.duelId.toString()] = event;
-                });
-                
-                claimedByDuelId.forEach(event => {
-                    claimedByDuelId[event.args.duelId.toString()] = event;
-                });
-                
-                // Process all initiated duels
-                const duels = [];
-                
-                for (const event of duelInitiatedEvents) {
-                    const duelId = event.args.duelId.toString();
-                    const player1 = event.args.player1;
-                    const player2 = event.args.player2;
-                    const wager = parseFloat(ethers.utils.formatEther(event.args.wager));
-                    
-                    let status = 'pending'; // Default status after initBattle
-                    let winner = null;
-                    let loser = null;
-                    let netProfit = 0;
-                    let transactionHash = event.transactionHash;
-                    
-                    // Check duel progression
-                    if (nullifiedByDuelId[duelId]) {
-                        // Duel was nullified (cancelled)
-                        status = 'cancelled';
-                        const nullifyEvent = nullifiedByDuelId[duelId];
-                        transactionHash = nullifyEvent.transactionHash;
-                    } else if (joinedByDuelId[duelId]) {
-                        // Duel was joined (active)
-                        status = 'active';
-                        const joinEvent = joinedByDuelId[duelId];
-                        transactionHash = joinEvent.transactionHash;
-                        
-                        // Check if completed
-                        if (completedByDuelId[duelId]) {
-                            status = 'completed';
-                            const completedEvent = completedByDuelId[duelId];
-                            winner = completedEvent.args.winner;
-                            loser = completedEvent.args.loser;
-                            transactionHash = completedEvent.transactionHash;
-                            
-                            // Calculate net profit (after 5% fee)
-                            if (winner.toLowerCase() === player1.toLowerCase()) {
-                                netProfit = wager * 1.9; // 2 * wager - 0.1 * wager (5% fee on total winnings)
-                            } else if (winner.toLowerCase() === player2.toLowerCase()) {
-                                netProfit = wager * 1.9; // 2 * wager - 0.1 * wager (5% fee on total winnings)
-                            }
-                        }
-                    }
-                    
-                    duels.push({
-                        id: duelId,
-                        player1,
-                        player2,
-                        wager,
-                        winner,
-                        loser,
-                        status,
-                        netProfit,
-                        timestamp: event.blockNumber,
-                        transactionHash,
-                        blockNumber: event.blockNumber
-                    });
-                }
-                
-                // Sort by block number (newest first) and limit
-                duels.sort((a, b) => b.blockNumber - a.blockNumber);
-                const recentDuels = duels.slice(0, limit);
-                
-                // Cache the result
-                this.setCachedData('liveFeed', cacheKey, recentDuels);
-                
-                return recentDuels;
-            } catch (contractError) {
-                console.error('Error fetching duel activity from contract:', contractError);
-                return []; // Return empty array if there's an error
-            }
+            const fromChain = await this.getLiveFeedPageFromChain({
+                page: pg,
+                pageSize: ps,
+                includeClaimed
+            });
+            this.setCachedData('liveFeed', cacheKey, fromChain);
+            return fromChain;
         } catch (error) {
-            console.error('Error fetching recent duel activity:', error);
-            throw error;
+            console.error('Error fetching live feed page:', error);
+            const ps =
+                pageSize ||
+                (typeof CONFIG !== 'undefined' && CONFIG.UI && CONFIG.UI.LIVE_FEED_PAGE_SIZE) ||
+                100;
+            return this.emptyLiveFeedPage(page, ps);
         }
     }
 
-    // Generate transaction link for current chain
-    generateTransactionLink(txHash) {
-        return `${this.currentChain.EXPLORER_URL}/tx/${txHash}`;
+    /** @deprecated Prefer getLiveFeedPage; returns duels array only (page 1). */
+    async getRecentDuelActivity(limit = 20) {
+        const r = await this.getLiveFeedPage({ page: 1, pageSize: limit });
+        return r.duels || [];
     }
 
-    // Generate wallet link for current chain
+    // Generate transaction link for Abstract L2
+    generateTransactionLink(txHash) {
+        return `${CONFIG.EXPLORER_URL}/tx/${txHash}`;
+    }
+
+    // Generate wallet link for Abstract L2
     generateWalletLink(walletAddress) {
-        return `${this.currentChain.EXPLORER_URL}/address/${walletAddress}`;
+        return `${CONFIG.EXPLORER_URL}/address/${walletAddress}`;
     }
 
     // Get battle information by ID
@@ -850,10 +1035,22 @@ class CambriaWeb3 {
                 });
             }
             
-            // Load live feed cache
+            // Load live feed cache (Map of cacheKey -> { data, timestamp })
             const liveFeedCache = localStorage.getItem('cambriaLiveFeedCache');
+            this.cache.liveFeed = new Map();
             if (liveFeedCache) {
-                this.cache.liveFeed = JSON.parse(liveFeedCache);
+                try {
+                    const parsed = JSON.parse(liveFeedCache);
+                    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                        Object.entries(parsed).forEach(([key, entry]) => {
+                            if (entry && entry.data !== undefined) {
+                                this.cache.liveFeed.set(key, entry);
+                            }
+                        });
+                    }
+                } catch {
+                    /* ignore legacy shape */
+                }
             }
             
             // Load duel transactions cache
@@ -896,8 +1093,12 @@ class CambriaWeb3 {
             localStorage.setItem('cambriaDuelHistoryCache', JSON.stringify(duelHistoryCache));
             
             // Save live feed cache
-            if (this.cache.liveFeed) {
-                localStorage.setItem('cambriaLiveFeedCache', JSON.stringify(this.cache.liveFeed));
+            if (this.cache.liveFeed instanceof Map && this.cache.liveFeed.size > 0) {
+                const liveFeedObj = {};
+                this.cache.liveFeed.forEach((value, key) => {
+                    liveFeedObj[key] = value;
+                });
+                localStorage.setItem('cambriaLiveFeedCache', JSON.stringify(liveFeedObj));
             }
             
             // Save duel transactions cache
@@ -962,11 +1163,12 @@ class CambriaWeb3 {
                     
                     if (response.ok) {
                         const result = await response.json();
+                        const normalized = this.normalizeDuelTransactionsFromApi(result);
                         
                         // Cache the result
-                        this.setCachedData('duelTransactions', duelId, result);
+                        this.setCachedData('duelTransactions', duelId, normalized);
                         
-                        return result;
+                        return normalized;
                     } else {
                         console.log('API server error, falling back to direct contract call');
                     }
@@ -1256,7 +1458,7 @@ class CambriaWeb3 {
         } else {
             // Clear all entries of this type
             if (type === 'liveFeed') {
-                this.cache.liveFeed = null;
+                this.cache.liveFeed = new Map();
                 console.log(`Cache invalidated: ${type}`);
             } else {
                 this.cache[type].clear();

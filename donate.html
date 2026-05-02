@@ -1,767 +1,961 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Donate - Cambria Duel Arena Tracker</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #6a3d9a;
-            --primary-light: #8b5fb8;
-            --primary-dark: #4a2c6b;
-            --secondary: #00b4d8;
-            --secondary-light: #33c4e0;
-            --secondary-dark: #0099b8;
-            --success: #28a745;
-            --danger: #dc3545;
-            --warning: #ffc107;
-            --info: #17a2b8;
-            --dark: #0a0a0a;
-            --dark-light: #1a1a1a;
-            --dark-lighter: #2a2a2a;
-            --text: #ffffff;
-            --text-secondary: #b0b0b0;
-            --text-muted: #808080;
-            --border: #333333;
-            --shadow: rgba(0, 0, 0, 0.3);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, var(--dark) 0%, var(--dark-light) 100%);
-            color: var(--text);
-            line-height: 1.6;
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        header {
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
-            padding: 20px 0;
-            box-shadow: 0 4px 20px var(--shadow);
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .chain-toggle {
-            display: flex;
-            gap: 12px;
-            margin: 0 20px;
-            background: var(--dark-lighter);
-            padding: 6px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
-
-        .chain-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-secondary);
-            padding: 10px 18px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .chain-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            border-radius: 8px;
-        }
-
-        .chain-btn:hover::before {
-            opacity: 0.1;
-        }
-
-        .chain-btn:hover {
-            color: var(--text);
-            transform: translateY(-1px);
-        }
-
-        .chain-btn.active {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            box-shadow: 0 4px 12px rgba(106, 61, 154, 0.3);
-        }
-
-        .chain-btn.active:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(106, 61, 154, 0.4);
-        }
-
-        .chain-btn.active::before {
-            opacity: 0;
-        }
-
-        .chain-icon {
-            font-size: 18px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .chain-btn span:last-child {
-            position: relative;
-            z-index: 1;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 24px;
-            font-weight: 900;
-            color: var(--text);
-        }
-
-        .logo-icon {
-            font-size: 28px;
-            margin-right: 10px;
-        }
-
-        nav ul {
-            display: flex;
-            list-style: none;
-            gap: 30px;
-        }
-
-        nav a {
-            color: var(--text);
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s;
-            position: relative;
-        }
-
-        nav a:hover {
-            color: var(--secondary);
-        }
-
-        nav a.active {
-            color: var(--secondary);
-        }
-
-        nav a.active::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--secondary);
-        }
-
-        main {
-            padding: 60px 0;
-        }
-
-        .donate-hero {
-            text-align: center;
-            margin-bottom: 80px;
-        }
-
-        .donate-hero h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 48px;
-            font-weight: 900;
-            margin-bottom: 20px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .donate-hero p {
-            font-size: 18px;
-            color: var(--text-secondary);
-            max-width: 600px;
-            margin: 0 auto 40px;
-        }
-
-        .donation-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 30px;
-            margin-bottom: 60px;
-        }
-
-        .donation-card {
-            background: var(--dark-light);
-            border-radius: 16px;
-            padding: 40px;
-            border: 1px solid var(--border);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .donation-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary);
-            box-shadow: 0 20px 40px rgba(106, 61, 154, 0.2);
-        }
-
-        .donation-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
-        }
-
-        .crypto-icon {
-            font-size: 48px;
-            margin-bottom: 20px;
-            display: block;
-        }
-
-        .crypto-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: var(--text);
-        }
-
-        .crypto-description {
-            color: var(--text-secondary);
-            margin-bottom: 25px;
-            font-size: 14px;
-        }
-
-        .address-container {
-            background: var(--dark-lighter);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border);
-        }
-
-        .address-label {
-            font-size: 12px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-        }
-
-        .address-value {
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            color: var(--text);
-            word-break: break-all;
-            line-height: 1.4;
-        }
-
-        .copy-btn {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            width: 100%;
-            justify-content: center;
-        }
-
-        .copy-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(106, 61, 154, 0.3);
-        }
-
-        .copy-btn.copied {
-            background: var(--success);
-        }
-
-        .copy-btn.copied:hover {
-            background: var(--success);
-            transform: none;
-        }
-
-        .network-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 15px;
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .network-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--success);
-        }
-
-        .support-section {
-            background: var(--dark-light);
-            border-radius: 16px;
-            padding: 50px;
-            text-align: center;
-            border: 1px solid var(--border);
-            margin-bottom: 40px;
-        }
-
-        .support-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            color: var(--secondary);
-        }
-
-        .support-description {
-            font-size: 18px;
-            color: var(--text-secondary);
-            max-width: 800px;
-            margin: 0 auto 30px;
-            line-height: 1.8;
-        }
-
-        .benefits-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
-            margin-top: 40px;
-        }
-
-        .benefit-item {
-            text-align: center;
-            padding: 20px;
-        }
-
-        .benefit-icon {
-            font-size: 36px;
-            margin-bottom: 15px;
-            display: block;
-        }
-
-        .benefit-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: var(--text);
-        }
-
-        .benefit-description {
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
-
-        .thank-you {
-            text-align: center;
-            padding: 40px;
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
-            border-radius: 16px;
-            margin-top: 40px;
-        }
-
-        .thank-you h3 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 28px;
-            margin-bottom: 15px;
-            color: var(--text);
-        }
-
-        .thank-you p {
-            font-size: 16px;
-            color: var(--text-secondary);
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        footer {
-            background-color: var(--dark-light);
-            padding: 30px 0;
-            text-align: center;
-            margin-top: 60px;
-        }
-
-        .footer-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 20px;
-            font-weight: 900;
-            color: var(--text);
-            margin-bottom: 15px;
-        }
-
-        .logo-icon {
-            font-size: 24px;
-            margin-right: 8px;
-        }
-
-        .social-links {
-            display: flex;
-            margin: 20px 0;
-        }
-
-        .social-links a {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: var(--primary);
-            color: white;
-            margin: 0 10px;
-            text-decoration: none;
-            transition: transform 0.3s;
-        }
-
-        .social-links a:hover {
-            transform: translateY(-3px);
-        }
-
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-            }
-
-            nav ul {
-                margin-top: 20px;
-            }
-
-            .donation-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .donate-hero h1 {
-                font-size: 36px;
-            }
-
-            .support-section {
-                padding: 30px 20px;
-            }
-
-            .benefits-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="assets/cambria-emblem.png" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/cambria-emblem.png">
+<title>Donate — Cambria Duel Arena Data</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@400;500;600;700&family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+--primary: #ff5a1f;
+--primary-light: #ff7a3c;
+--primary-dark: #c63f14;
+--secondary: #ff3d2e;
+--secondary-light: #ff6a52;
+--secondary-dark: #d73022;
+--success: #00cc66;
+--danger: #ff4d4d;
+--warning: #ffc107;
+--info: #17a2b8;
+--dark: #0a0a0a;
+--dark-light: #1a1a1a;
+--dark-lighter: #2a2a2a;
+--text: #ffffff;
+--text-secondary: #b0b0b0;
+--text-muted: #808080;
+--border: #333333;
+--shadow: rgba(0, 0, 0, 0.3);
+--glow: rgba(255, 90, 31, 0.5);
+}
+
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+
+body {
+font-family: 'Roboto', sans-serif;
+background: radial-gradient(ellipse at top, #1a0f0f 0%, #0a0a0a 100%);
+color: var(--text);
+line-height: 1.6;
+min-height: 100vh;
+overflow-x: hidden;
+}
+
+body::before {
+content: '';
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background: 
+radial-gradient(circle at 20% 50%, rgba(255, 90, 31, 0.1) 0%, transparent 50%),
+radial-gradient(circle at 80% 20%, rgba(255, 61, 46, 0.1) 0%, transparent 50%),
+radial-gradient(circle at 40% 80%, rgba(255, 122, 60, 0.08) 0%, transparent 50%);
+pointer-events: none;
+z-index: 0;
+}
+
+.container {
+max-width: 1200px;
+margin: 0 auto;
+padding: 0 20px;
+position: relative;
+z-index: 1;
+}
+
+/* Header */
+header {
+background: linear-gradient(135deg, rgba(198, 63, 20, 0.2) 0%, rgba(255, 90, 31, 0.1) 100%);
+padding: 12px 0;
+box-shadow: 0 4px 20px var(--shadow);
+backdrop-filter: blur(10px);
+border-bottom: 1px solid rgba(255, 90, 31, 0.1);
+}
+
+.header-content {
+display: flex;
+justify-content: space-between;
+align-items: center;
+flex-wrap: wrap;
+}
+
+.logo {
+display: flex;
+align-items: center;
+font-family: 'Orbitron', sans-serif;
+font-size: 24px;
+font-weight: 900;
+color: var(--text);
+text-decoration: none;
+transition: all 0.3s ease;
+}
+
+.logo:hover {
+color: var(--primary-light);
+}
+
+.logo-mark {
+filter: drop-shadow(0 0 10px rgba(255, 90, 31, 0.5));
+transition: all 0.3s ease;
+}
+
+.logo:hover .logo-mark {
+filter: drop-shadow(0 0 20px rgba(255, 90, 31, 0.8));
+}
+
+.logo-icon {
+font-size: 28px;
+margin-right: 10px;
+}
+
+nav ul {
+display: flex;
+list-style: none;
+gap: 30px;
+}
+
+nav a {
+color: var(--text);
+text-decoration: none;
+font-weight: 500;
+transition: all 0.3s;
+position: relative;
+font-family: 'Rajdhani', sans-serif;
+font-size: 18px;
+text-transform: uppercase;
+letter-spacing: 1px;
+}
+
+nav a:hover {
+color: var(--primary-light);
+transform: translateY(-2px);
+}
+
+nav a.active {
+color: var(--primary);
+}
+
+nav a.active::after {
+content: '';
+position: absolute;
+bottom: -5px;
+left: 0;
+right: 0;
+height: 2px;
+background: linear-gradient(90deg, var(--primary), var(--secondary));
+box-shadow: 0 0 10px var(--glow);
+}
+
+/* Nav Toggle */
+.nav-toggle {
+display: none;
+flex-direction: column;
+justify-content: center;
+gap: 5px;
+background: none;
+border: none;
+cursor: pointer;
+padding: 5px;
+}
+
+.nav-toggle span {
+width: 25px;
+height: 3px;
+background-color: var(--text);
+border-radius: 2px;
+transition: all 0.3s;
+}
+
+main {
+padding: 80px 0 60px;
+}
+
+/* Hero Section */
+.donate-hero {
+text-align: center;
+margin-bottom: 80px;
+position: relative;
+}
+
+.donate-hero h1 {
+font-family: 'Orbitron', sans-serif;
+font-size: clamp(28px, 4vw, 48px);
+font-weight: 900;
+margin-bottom: 15px;
+background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--primary) 100%);
+background-size: 200% auto;
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+animation: gradientShift 3s ease infinite;
+filter: drop-shadow(0 0 20px rgba(255, 90, 31, 0.3));
+}
+
+.donate-hero p {
+font-size: clamp(14px, 1.5vw, 17px);
+color: var(--text-secondary);
+max-width: 650px;
+margin: 0 auto;
+line-height: 1.7;
+}
+
+.donate-hero-icon {
+width: clamp(60px, 10vw, 100px);
+height: clamp(60px, 10vw, 100px);
+margin-bottom: 10px;
+display: block;
+margin-left: auto;
+margin-right: auto;
+filter: drop-shadow(0 0 25px rgba(255, 90, 31, 0.6));
+animation: float 3s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+0%, 100% { background-position: 0% 50%; }
+50% { background-position: 100% 50%; }
+}
+
+.donate-hero p {
+font-size: clamp(16px, 2vw, 20px);
+color: var(--text-secondary);
+max-width: 700px;
+margin: 0 auto;
+line-height: 1.8;
+}
+
+.donate-hero-emoji {
+font-size: clamp(48px, 8vw, 80px);
+margin-bottom: 20px;
+display: block;
+animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+0%, 100% { transform: translateY(0); }
+50% { transform: translateY(-20px); }
+}
+
+/* Donation Grid */
+.donation-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+gap: 40px;
+margin-bottom: 80px;
+}
+
+.donation-card {
+background: linear-gradient(135deg, rgba(26, 15, 15, 0.8) 0%, rgba(42, 26, 26, 0.8) 100%);
+border-radius: 16px;
+padding: 30px 24px;
+border: 1px solid rgba(255, 90, 31, 0.2);
+transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+position: relative;
+overflow: hidden;
+backdrop-filter: blur(10px);
+}
+
+.donation-card::before {
+content: '';
+position: absolute;
+top: 0;
+left: -100%;
+right: 0;
+height: 3px;
+background: linear-gradient(90deg, transparent, var(--primary), var(--secondary), transparent);
+transition: left 0.5s ease;
+}
+
+.donation-card:hover {
+transform: translateY(-10px) scale(1.02);
+border-color: var(--primary);
+box-shadow: 
+0 20px 60px rgba(255, 90, 31, 0.3),
+0 0 100px rgba(255, 90, 31, 0.1);
+}
+
+.donation-card:hover::before {
+left: 0;
+}
+
+.crypto-icon {
+font-size: 42px;
+margin-bottom: 15px;
+display: block;
+filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.crypto-title {
+font-family: 'Orbitron', sans-serif;
+font-size: 21px;
+font-weight: 700;
+margin-bottom: 8px;
+color: var(--text);
+}
+
+.crypto-description {
+color: var(--text-secondary);
+margin-bottom: 20px;
+font-size: 13px;
+line-height: 1.5;
+}
+
+.address-container {
+background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(42, 26, 26, 0.6) 100%);
+border-radius: 10px;
+padding: 16px;
+margin-bottom: 18px;
+border: 1px solid rgba(255, 90, 31, 0.15);
+transition: all 0.3s ease;
+}
+
+.address-container:hover {
+border-color: var(--primary);
+box-shadow: 0 0 20px rgba(255, 90, 31, 0.2);
+}
+
+.address-label {
+font-size: 10px;
+color: var(--text-muted);
+text-transform: uppercase;
+letter-spacing: 1.2px;
+margin-bottom: 8px;
+font-weight: 600;
+}
+
+.address-value {
+font-family: 'Courier New', monospace;
+font-size: 12px;
+color: var(--primary-light);
+word-break: break-all;
+line-height: 1.5;
+font-weight: 500;
+}
+
+.copy-btn {
+background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+color: white;
+border: none;
+padding: 12px 24px;
+border-radius: 8px;
+cursor: pointer;
+font-weight: 600;
+font-size: 13px;
+transition: all 0.3s;
+display: flex;
+align-items: center;
+gap: 8px;
+width: 100%;
+justify-content: center;
+font-family: 'Rajdhani', sans-serif;
+text-transform: uppercase;
+letter-spacing: 1px;
+position: relative;
+overflow: hidden;
+}
+
+.copy-btn::before {
+content: '';
+position: absolute;
+top: 50%;
+left: 50%;
+width: 0;
+height: 0;
+border-radius: 50%;
+background: rgba(255, 255, 255, 0.2);
+transform: translate(-50%, -50%);
+transition: width 0.6s, height 0.6s;
+}
+
+.copy-btn:hover::before {
+width: 300px;
+height: 300px;
+}
+
+.copy-btn:hover {
+transform: translateY(-3px);
+box-shadow: 0 10px 30px rgba(255, 90, 31, 0.4);
+}
+
+.copy-btn:active {
+transform: translateY(-1px);
+}
+
+.copy-btn.copied {
+background: linear-gradient(135deg, var(--success) 0%, #00a855 100%);
+}
+
+.copy-btn span:first-child {
+font-size: 18px;
+transition: transform 0.3s;
+}
+
+.copy-btn:hover span:first-child {
+transform: scale(1.2);
+}
+
+.network-info {
+display: flex;
+align-items: center;
+gap: 8px;
+margin-top: 20px;
+font-size: 12px;
+color: var(--text-muted);
+justify-content: center;
+}
+
+.network-dot {
+width: 8px;
+height: 8px;
+border-radius: 50%;
+background: var(--success);
+box-shadow: 0 0 10px var(--success);
+animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+0%, 100% { opacity: 1; transform: scale(1); }
+50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+/* Support Section */
+.support-section {
+background: linear-gradient(135deg, rgba(26, 15, 15, 0.9) 0%, rgba(42, 26, 26, 0.9) 100%);
+border-radius: 20px;
+padding: 50px 30px;
+text-align: center;
+border: 1px solid rgba(255, 90, 31, 0.2);
+margin-bottom: 50px;
+position: relative;
+overflow: hidden;
+}
+
+.support-section::before {
+content: '';
+position: absolute;
+top: -50%;
+left: -50%;
+width: 200%;
+height: 200%;
+background: radial-gradient(circle, rgba(255, 90, 31, 0.05) 0%, transparent 70%);
+animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+from { transform: rotate(0deg); }
+to { transform: rotate(360deg); }
+}
+
+.support-title {
+font-family: 'Orbitron', sans-serif;
+font-size: clamp(24px, 3.5vw, 36px);
+font-weight: 700;
+margin-bottom: 15px;
+color: var(--primary-light);
+position: relative;
+}
+
+.support-description {
+font-size: clamp(14px, 1.3vw, 16px);
+color: var(--text-secondary);
+max-width: 750px;
+margin: 0 auto 30px;
+line-height: 1.7;
+position: relative;
+}
+
+.benefits-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+gap: 30px;
+margin-top: 40px;
+position: relative;
+}
+
+.benefit-item {
+text-align: center;
+padding: 30px 20px;
+border-radius: 16px;
+background: rgba(255, 90, 31, 0.05);
+border: 1px solid rgba(255, 90, 31, 0.1);
+transition: all 0.3s ease;
+}
+
+.benefit-item:hover {
+background: rgba(255, 90, 31, 0.1);
+border-color: var(--primary);
+transform: translateY(-5px);
+}
+
+.benefit-icon {
+font-size: 40px;
+margin-bottom: 15px;
+display: block;
+filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.benefit-title {
+font-size: 17px;
+font-weight: 600;
+margin-bottom: 10px;
+color: var(--text);
+font-family: 'Rajdhani', sans-serif;
+text-transform: uppercase;
+letter-spacing: 1px;
+}
+
+.benefit-description {
+font-size: 13px;
+color: var(--text-secondary);
+line-height: 1.5;
+}
+
+/* Thank You Section */
+.thank-you {
+text-align: center;
+padding: 50px 30px;
+background: linear-gradient(135deg, rgba(198, 63, 20, 0.2) 0%, rgba(255, 90, 31, 0.1) 100%);
+border-radius: 20px;
+margin-top: 40px;
+border: 1px solid rgba(255, 90, 31, 0.2);
+position: relative;
+overflow: hidden;
+}
+
+.thank-you::before {
+content: '';
+position: absolute;
+top: 0;
+left: -100%;
+right: 0;
+height: 2px;
+background: linear-gradient(90deg, transparent, var(--primary), var(--secondary), transparent);
+animation: shine 3s infinite;
+}
+
+@keyframes shine {
+0% { left: -100%; }
+100% { left: 100%; }
+}
+
+.thank-you h3 {
+font-family: 'Orbitron', sans-serif;
+font-size: clamp(22px, 2.8vw, 28px);
+margin-bottom: 12px;
+color: var(--primary-light);
+}
+
+.thank-you p {
+font-size: clamp(14px, 1.2vw, 16px);
+color: var(--text-secondary);
+max-width: 550px;
+margin: 0 auto;
+line-height: 1.6;
+}
+
+/* Contact Section */
+.contact-section {
+margin-top: 80px;
+margin-bottom: 60px;
+}
+
+.section-title {
+font-family: 'Orbitron', sans-serif;
+font-size: clamp(24px, 3vw, 32px);
+margin-bottom: 10px;
+color: var(--primary-light);
+text-align: center;
+}
+
+/* Footer */
+footer {
+background: linear-gradient(180deg, rgba(26, 15, 15, 0.5) 0%, rgba(10, 10, 10, 0.9) 100%);
+padding: 40px 0 30px;
+text-align: center;
+margin-top: 60px;
+border-top: 1px solid rgba(255, 90, 31, 0.1);
+}
+
+.footer-content {
+display: flex;
+flex-direction: column;
+align-items: center;
+}
+
+.logo {
+display: flex;
+align-items: center;
+font-family: 'Orbitron', sans-serif;
+font-size: 20px;
+font-weight: 900;
+color: var(--text);
+margin-bottom: 15px;
+}
+
+.logo-mark {
+width: 36px;
+height: 36px;
+margin-right: 12px;
+filter: drop-shadow(0 0 10px rgba(255, 90, 31, 0.5));
+}
+
+.social-links {
+display: flex;
+margin: 20px 0;
+}
+
+.social-links a {
+display: flex;
+align-items: center;
+justify-content: center;
+width: 45px;
+height: 45px;
+border-radius: 50%;
+background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+color: white;
+margin: 0 10px;
+text-decoration: none;
+transition: all 0.3s;
+font-size: 20px;
+}
+
+.social-links a:hover {
+transform: translateY(-5px) scale(1.1);
+box-shadow: 0 10px 25px rgba(255, 90, 31, 0.4);
+}
+
+/* Mobile Navigation */
+@media (max-width: 768px) {
+.header-content {
+flex-direction: column;
+}
+
+nav ul {
+margin-top: 20px;
+display: none;
+flex-direction: column;
+width: 100%;
+}
+
+nav ul.nav-active {
+display: flex;
+}
+
+nav ul li {
+margin: 10px 0;
+}
+
+.nav-toggle {
+display: flex;
+position: absolute;
+right: 20px;
+top: 20px;
+}
+
+.donation-grid {
+grid-template-columns: 1fr;
+}
+
+.support-section {
+padding: 40px 20px;
+}
+
+.benefits-grid {
+grid-template-columns: 1fr;
+}
+}
+
+/* Animation on scroll */
+.fade-in {
+opacity: 0;
+transform: translateY(30px);
+transition: all 0.6s ease;
+}
+
+.fade-in.visible {
+opacity: 1;
+transform: translateY(0);
+}
+</style>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="super-shell.css">
 </head>
 <body>
-    <header>
-        <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    <span class="logo-icon">⚔️</span>
-                    <span>Cambria Duel Tracker</span>
-                </div>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+<canvas id="wind" aria-hidden="true"></canvas>
+<div class="tech-grid" aria-hidden="true"></div>
+<div class="galaxy-vignette" aria-hidden="true"></div>
 
-                <div class="chain-toggle">
-                    <button class="chain-btn active" data-chain="abstract" onclick="switchChain('abstract')">
-                        <span class="chain-icon">🟢</span>
-                        <span>Abstract L2</span>
-                    </button>
-                    <button class="chain-btn" data-chain="ronin" onclick="switchChain('ronin')">
-                        <span class="chain-icon">⚔️</span>
-                        <span>Ronin</span>
-                    </button>
-                </div>
+<header class="navbar" role="banner">
+<div class="container nav-container">
+<a href="index.html" class="logo"><img src="assets/cambria-emblem.png" alt="" class="logo-mark" width="44" height="44" decoding="async" /><span class="electric-text-wrap electric-text-wrap--nav"><span class="electric-text electric-text--nav">Cambria Duel Arena Data</span></span></a>
+<button type="button" class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links"><span></span><span></span><span></span></button>
+<nav aria-label="Main navigation">
+<ul class="nav-links" id="nav-links">
+<li><a href="index.html">Home</a></li>
+<li><a href="wallet.html">Wallet</a></li>
+<li><a href="leaderboard.html">Leaderboard</a></li>
+<li><a href="statistics.html">Statistics</a></li>
+<li><a href="about.html">About</a></li>
+<li><a href="donate.html" class="active">Donate</a></li>
+</ul>
+</nav>
+</div>
+</header>
 
-                <nav>
-                    <ul>
-                        <li><a href="index.html">Home</a></li>
-                        <li><a href="leaderboard.html">Leaderboard</a></li>
-                        <li><a href="statistics.html">Statistics</a></li>
-                        <li><a href="about.html">About</a></li>
-                        <li><a href="donate.html" class="active">Donate</a></li>
-                    </ul>
-                </nav>
-            </div>
-        </div>
-    </header>
+<main id="main-content">
+<div class="container">
+<div class="donate-hero fade-in">
+<img src="assets/cambria-emblem.png" alt="" class="donate-hero-icon" width="64" height="64" />
+<h1>Support The Arena</h1>
+<p>Help keep Cambria Duel Arena Data running strong! Your contributions fuel server costs, development hours, and new features that power our community.</p>
+</div>
 
-    <main>
-        <div class="container">
-            <div class="donate-hero">
-                <h1>Support the Project</h1>
-                <p>Help keep the Cambria Duel Arena Tracker running and improving. Your donations help cover server costs, development time, and new features.</p>
-            </div>
+<div class="donation-grid">
+<div class="donation-card fade-in" data-tilt>
+<span class="crypto-icon">🔷</span>
+<h3 class="crypto-title">Ethereum</h3>
+<p class="crypto-description">ETH on Ethereum Mainnet & Abstract L2</p>
 
-            <div class="donation-grid">
-                <div class="donation-card">
-                    <span class="crypto-icon">🔷</span>
-                    <h3 class="crypto-title">Ethereum (ETH)</h3>
-                    <p class="crypto-description">Send ETH directly to our wallet address</p>
-                    
-                    <div class="address-container">
-                        <div class="address-label">Ethereum Address</div>
-                        <div class="address-value" id="ethAddress">0x698e41734141ab1557a6c9e1bfdfbc875248336b</div>
-                    </div>
-                    
-                    <button class="copy-btn" onclick="copyAddress('ethAddress', 'ETH')">
-                        <span>📋</span>
-                        <span>Copy ETH Address</span>
-                    </button>
-                    
-                    <div class="network-info">
-                        <span class="network-dot"></span>
-                        <span>Ethereum Mainnet & Abstract L2</span>
-                    </div>
-                </div>
+<div class="address-container">
+<div class="address-label">Wallet Address</div>
+<div class="address-value" id="ethAddress">0x698e41734141ab1557a6c9e1bfdfbc875248336b</div>
+</div>
 
-                <div class="donation-card">
-                    <span class="crypto-icon">₿</span>
-                    <h3 class="crypto-title">Bitcoin (BTC)</h3>
-                    <p class="crypto-description">Send Bitcoin to our Bitcoin address</p>
-                    
-                    <div class="address-container">
-                        <div class="address-label">Bitcoin Address</div>
-                        <div class="address-value" id="btcAddress">bc1prguzp8z59lah92yy08f7d0mf5dpy2fuzdwlg4uy8matlpm53vd0qrrkzrt</div>
-                    </div>
-                    
-                    <button class="copy-btn" onclick="copyAddress('btcAddress', 'BTC')">
-                        <span>📋</span>
-                        <span>Copy BTC Address</span>
-                    </button>
-                    
-                    <div class="network-info">
-                        <span class="network-dot"></span>
-                        <span>Bitcoin Network</span>
-                    </div>
-                </div>
+<button class="copy-btn" onclick="copyAddress('ethAddress', 'ETH')">
+<span>📋</span>
+<span>Copy Address</span>
+</button>
 
-                <div class="donation-card">
-                    <span class="crypto-icon">◎</span>
-                    <h3 class="crypto-title">Solana (SOL)</h3>
-                    <p class="crypto-description">Send Solana to our Solana address</p>
-                    
-                    <div class="address-container">
-                        <div class="address-label">Solana Address</div>
-                        <div class="address-value" id="solAddress">3giEjoBj4aZfyjHzzV2TKUSjmBDiZrSA94Lxx3zBDHLA</div>
-                    </div>
-                    
-                    <button class="copy-btn" onclick="copyAddress('solAddress', 'SOL')">
-                        <span>📋</span>
-                        <span>Copy SOL Address</span>
-                    </button>
-                    
-                    <div class="network-info">
-                        <span class="network-dot"></span>
-                        <span>Solana Network</span>
-                    </div>
-                </div>
-            </div>
+<div class="network-info">
+<span class="network-dot"></span>
+<span>ETH Mainnet & Abstract</span>
+</div>
+</div>
 
-            <div class="support-section">
-                <h2 class="support-title">Why Support Us?</h2>
-                <p class="support-description">
-                    This project is built and maintained by developers who are passionate about the Cambria ecosystem. 
-                    Your support helps us continue providing valuable tools and insights to the community.
-                </p>
-                
-                <div class="benefits-grid">
-                    <div class="benefit-item">
-                        <span class="benefit-icon">🚀</span>
-                        <h4 class="benefit-title">Keep Running 24/7</h4>
-                        <p class="benefit-description">Maintain servers and infrastructure for continuous data tracking</p>
-                    </div>
-                    
-                    <div class="benefit-item">
-                        <span class="benefit-icon">⚡</span>
-                        <h4 class="benefit-title">New Features</h4>
-                        <p class="benefit-description">Develop new tools and improvements based on community feedback</p>
-                    </div>
-                    
-                    <div class="benefit-item">
-                        <span class="benefit-icon">📊</span>
-                        <h4 class="benefit-title">Data Accuracy</h4>
-                        <p class="benefit-description">Ensure real-time data accuracy and reliability</p>
-                    </div>
-                    
-                    <div class="benefit-item">
-                        <span class="benefit-icon">👥</span>
-                        <h4 class="benefit-title">Community Support</h4>
-                        <p class="benefit-description">Help us support and grow the Cambria community</p>
-                    </div>
-                </div>
-            </div>
+<div class="donation-card fade-in" data-tilt>
+<span class="crypto-icon">₿</span>
+<h3 class="crypto-title">Bitcoin</h3>
+<p class="crypto-description">BTC on Bitcoin Network</p>
 
-            <div class="thank-you">
-                <h3>Thank You! 🙏</h3>
-                <p>Every donation, no matter the size, helps us continue building and improving the Cambria Duel Arena Tracker. We appreciate your support!</p>
-            </div>
-        </div>
-    </main>
+<div class="address-container">
+<div class="address-label">Wallet Address</div>
+<div class="address-value" id="btcAddress">bc1prguzp8z59lah92yy08f7d0mf5dpy2fuzdwlg4uy8matlpm53vd0qrrkzrt</div>
+</div>
 
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="logo">
-                    <span class="logo-icon">⚔️</span>
-                    <span>Cambria Duel Tracker</span>
-                </div>
-                <p>Track and analyze Cambria Duel Arena data on the Abstract L2 chain</p>
-                <div class="social-links">
-                    <a href="#"><span>𝕏</span></a>
-                    <a href="#"><span>𝐌</span></a>
-                    <a href="#"><span>𝐆</span></a>
-                </div>
-                <p>© 2023 Cambria Duel Tracker. Not affiliated with @playcambria.</p>
-            </div>
-        </div>
-    </footer>
+<button class="copy-btn" onclick="copyAddress('btcAddress', 'BTC')">
+<span>📋</span>
+<span>Copy Address</span>
+</button>
 
-    <script>
-        function copyAddress(elementId, cryptoType) {
-            const addressElement = document.getElementById(elementId);
-            const address = addressElement.textContent;
-            
-            navigator.clipboard.writeText(address).then(function() {
-                const copyBtn = addressElement.parentElement.nextElementSibling;
-                const copyIcon = copyBtn.querySelector('span:first-child');
-                const copyText = copyBtn.querySelector('span:last-child');
-                
-                copyIcon.textContent = '✓';
-                copyText.textContent = 'Copied!';
-                copyBtn.classList.add('copied');
-                
-                setTimeout(() => {
-                    copyIcon.textContent = '📋';
-                    copyText.textContent = `Copy ${cryptoType} Address`;
-                    copyBtn.classList.remove('copied');
-                }, 2000);
-            }).catch(function(err) {
-                console.error('Failed to copy address:', err);
-                alert('Failed to copy address. Please copy manually.');
-            });
-        }
+<div class="network-info">
+<span class="network-dot"></span>
+<span>Bitcoin Network</span>
+</div>
+</div>
 
-        // Chain switching functionality
-        function switchChain(chain) {
-            if (CONFIG.switchChain(chain)) {
-                // Update UI
-                document.querySelectorAll('.chain-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                document.querySelector(`[data-chain="${chain}"]`).classList.add('active');
-                
-                // Update chain-specific text
-                updateChainSpecificText();
-                
-                // Show notification
-                showNotification(`Switched to ${CONFIG.getCurrentChain().CHAIN_NAME}`, 'success');
-            }
-        }
+<div class="donation-card fade-in" data-tilt>
+<span class="crypto-icon">◎</span>
+<h3 class="crypto-title">Solana</h3>
+<p class="crypto-description">SOL on Solana Network</p>
 
-        // Load saved theme on page load
-        function loadSavedTheme() {
-            if (CONFIG.loadTheme()) {
-                // Update UI to reflect saved theme
-                document.querySelectorAll('.chain-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                document.querySelector(`[data-chain="${CONFIG.ACTIVE_CHAIN}"]`).classList.add('active');
-                
-                // Update chain-specific text
-                updateChainSpecificText();
-            }
-        }
+<div class="address-container">
+<div class="address-label">Wallet Address</div>
+<div class="address-value" id="solAddress">3giEjoBj4aZfyjHzzV2TKUSjmBDiZrSA94Lxx3zBDHLA</div>
+</div>
 
-        // Show notification
-        function showNotification(message, type = 'info') {
-            // Create notification element
-            const notification = document.createElement('div');
-            notification.className = `notification notification-${type}`;
-            notification.textContent = message;
-            
-            // Style the notification
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: var(--primary);
-                color: white;
-                padding: 12px 20px;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-                z-index: 1000;
-                font-weight: 500;
-                transform: translateX(100%);
-                transition: transform 0.3s ease;
-            `;
-            
-            document.body.appendChild(notification);
-            
-            // Animate in
-            setTimeout(() => {
-                notification.style.transform = 'translateX(0)';
-            }, 100);
-            
-            // Remove after 3 seconds
-            setTimeout(() => {
-                notification.style.transform = 'translateX(100%)';
-                setTimeout(() => {
-                    document.body.removeChild(notification);
-                }, 300);
-            }, 3000);
-        }
+<button class="copy-btn" onclick="copyAddress('solAddress', 'SOL')">
+<span>📋</span>
+<span>Copy Address</span>
+</button>
 
-        // Load saved theme on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadSavedTheme();
-        });
+<div class="network-info">
+<span class="network-dot"></span>
+<span>Solana Network</span>
+</div>
+</div>
+</div>
 
-        // Update chain-specific text throughout the page
-        function updateChainSpecificText() {
-            const currentChain = CONFIG.getCurrentChain();
-            const chainName = currentChain.CHAIN_NAME;
-            
-            // Update page title
-            const pageTitle = document.querySelector('h1');
-            if (pageTitle) {
-                pageTitle.textContent = `Donate - ${chainName}`;
-            }
-        }
-    </script>
+<div class="support-section fade-in">
+<h2 class="support-title">Why Your Support Matters</h2>
+<p class="support-description">
+This platform is built and maintained by passionate developers dedicated to the Cambria ecosystem.
+Your donations directly impact our ability to provide cutting-edge tools and real-time insights to the community.
+</p>
+
+<div class="benefits-grid">
+<div class="benefit-item">
+<span class="benefit-icon">🚀</span>
+<h4 class="benefit-title">24/7 Uptime</h4>
+<p class="benefit-description">Maintain servers and infrastructure for continuous data tracking</p>
+</div>
+
+<div class="benefit-item">
+<span class="benefit-icon">⚡</span>
+<h4 class="benefit-title">New Features</h4>
+<p class="benefit-description">Develop innovative tools based on community feedback</p>
+</div>
+
+<div class="benefit-item">
+<span class="benefit-icon">📊</span>
+<h4 class="benefit-title">Data Accuracy</h4>
+<p class="benefit-description">Ensure real-time precision and reliability</p>
+</div>
+
+<div class="benefit-item">
+<span class="benefit-icon">👥</span>
+<h4 class="benefit-title">Community Growth</h4>
+<p class="benefit-description">Support and expand the Cambria community</p>
+</div>
+</div>
+</div>
+
+<div class="thank-you fade-in">
+<h3>Thank You! 🙏</h3>
+<p>Every contribution, no matter the size, helps us build and improve Cambria Duel Arena Data. Your support means everything to us!</p>
+</div>
+
+<!-- Report Bugs / Give Suggestions Section -->
+<section class="contact-section fade-in">
+<h2 class="section-title">Report Bugs / Give Suggestions</h2>
+
+<form id="contactForm" style="max-width: 600px; margin: 30px auto; padding: 30px; background: linear-gradient(135deg, rgba(255, 90, 31, 0.1) 0%, rgba(255, 90, 31, 0.05) 100%); border-radius: 16px; border: 1px solid rgba(255, 90, 31, 0.3);">
+<div style="margin-bottom: 20px;">
+<label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary-light);">Username</label>
+<input type="text" name="username" required style="width: 100%; padding: 14px; border: 1px solid rgba(255, 90, 31, 0.5); border-radius: 8px; background: rgba(26, 15, 15, 0.8); color: var(--text); font-size: 15px; font-family: 'Roboto', sans-serif; transition: all 0.3s;" onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 15px rgba(255, 90, 31, 0.3)'" onblur="this.style.borderColor='rgba(255, 90, 31, 0.5)'; this.style.boxShadow='none'">
+</div>
+
+<div style="margin-bottom: 20px;">
+<label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary-light);">Subject</label>
+<input type="text" name="subject" required style="width: 100%; padding: 14px; border: 1px solid rgba(255, 90, 31, 0.5); border-radius: 8px; background: rgba(26, 15, 15, 0.8); color: var(--text); font-size: 15px; font-family: 'Roboto', sans-serif; transition: all 0.3s;" onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 15px rgba(255, 90, 31, 0.3)'" onblur="this.style.borderColor='rgba(255, 90, 31, 0.5)'; this.style.boxShadow='none'">
+</div>
+
+<div style="margin-bottom: 20px;">
+<label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary-light);">Message</label>
+<textarea name="message" required rows="5" style="width: 100%; padding: 14px; border: 1px solid rgba(255, 90, 31, 0.5); border-radius: 8px; background: rgba(26, 15, 15, 0.8); color: var(--text); font-size: 15px; font-family: 'Roboto', sans-serif; resize: vertical; transition: all 0.3s;" onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 15px rgba(255, 90, 31, 0.3)'" onblur="this.style.borderColor='rgba(255, 90, 31, 0.5)'; this.style.boxShadow='none'"></textarea>
+</div>
+
+<input type="hidden" name="access_key" value="4a564136-b3e1-440b-8bd0-37303367e9f2">
+<input type="hidden" name="from_name" value="Cambria Duel Arena Contact Form">
+
+<button type="submit" style="width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s; font-family: 'Rajdhani', sans-serif; text-transform: uppercase; letter-spacing: 1.5px; position: relative; overflow: hidden;">
+Send Message
+</button>
+
+<p id="formStatus" style="margin-top: 15px; text-align: center; font-size: 14px; font-weight: 500;"></p>
+</form>
+
+<script>
+document.getElementById('contactForm').addEventListener('submit', function(e) {
+e.preventDefault();
+
+const form = e.target;
+const formData = new FormData(form);
+const statusEl = document.getElementById('formStatus');
+
+statusEl.textContent = 'Sending...';
+statusEl.style.color = 'var(--text-secondary)';
+
+fetch('https://api.web3forms.com/submit', {
+method: 'POST',
+body: formData
+})
+.then(response => response.json())
+.then(data => {
+if (data.success) {
+statusEl.textContent = '✅ Message sent successfully! Thank you.';
+statusEl.style.color = 'var(--success)';
+form.reset();
+} else {
+statusEl.textContent = 'Failed to send. Please try again.';
+statusEl.style.color = 'var(--danger)';
+}
+})
+.catch(error => {
+console.error('Error:', error);
+statusEl.textContent = 'Failed to send. Please try again.';
+statusEl.style.color = 'var(--danger)';
+});
+});
+</script>
+</section>
+</div>
+</main>
+
+<footer>
+<div class="container">
+<div class="footer-content">
+<div class="logo">
+<img src="assets/cambria-emblem.png" alt="" class="logo-mark" width="36" height="36" decoding="async" />
+<span>Cambria Duel Arena Data</span>
+</div>
+<p>Track and analyze Cambria Duel Arena data on the Abstract L2 chain</p>
+<div class="social-links">
+<a href="https://x.com/playdegenarena" target="_blank" rel="noopener noreferrer"><span>𝕏</span></a>
+</div>
+<p>© 2023 Cambria Duel Arena Data. Not affiliated with @playcambria.</p>
+</div>
+</div>
+</footer>
+
+<script>
+function copyAddress(elementId, cryptoType) {
+const addressElement = document.getElementById(elementId);
+const address = addressElement.textContent;
+
+navigator.clipboard.writeText(address).then(function() {
+const copyBtn = addressElement.parentElement.nextElementSibling;
+const copyIcon = copyBtn.querySelector('span:first-child');
+const copyText = copyBtn.querySelector('span:last-child');
+
+copyIcon.textContent = '✓';
+copyText.textContent = 'Copied!';
+copyBtn.classList.add('copied');
+
+setTimeout(() => {
+copyIcon.textContent = '📋';
+copyText.textContent = `Copy ${cryptoType} Address`;
+copyBtn.classList.remove('copied');
+}, 2000);
+}).catch(function(err) {
+console.error('Failed to copy address:', err);
+alert('Failed to copy address. Please copy manually.');
+});
+}
+
+// Mobile navigation toggle
+const navToggle = document.querySelector('.nav-toggle');
+const navLinks = document.getElementById('nav-links');
+
+if (navToggle) {
+navToggle.addEventListener('click', function() {
+const isExpanded = this.getAttribute('aria-expanded') === 'true';
+this.setAttribute('aria-expanded', !isExpanded);
+navLinks.classList.toggle('nav-active');
+});
+}
+
+// Fade-in animation on scroll
+function handleScrollAnimation() {
+const elements = document.querySelectorAll('.fade-in');
+elements.forEach(el => {
+const rect = el.getBoundingClientRect();
+const isVisible = rect.top < window.innerHeight * 0.9;
+if (isVisible) {
+el.classList.add('visible');
+}
+});
+}
+
+window.addEventListener('scroll', handleScrollAnimation);
+handleScrollAnimation(); // Check on load
+</script>
+<script src="super-fx.js"></script>
+<script src="theme-animations.js"></script>
 </body>
 </html>
+<footer

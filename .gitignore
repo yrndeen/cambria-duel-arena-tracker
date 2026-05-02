@@ -90,3 +90,8 @@ logs
 # Temporary files
 tmp/
 temp/
+
+# Local indexer SQLite DB
+data/cambria.db
+data/cambria.db-shm
+data/cambria.db-wal

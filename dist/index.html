@@ -1,15 +1,2283 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cambria Duel Arena Tracker</title>
-    <script>
-        // Redirect to the main page
-        window.location.href = './index.html';
-    </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="assets/cambria-emblem.png" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/cambria-emblem.png">
+<title>Cambria Duel Arena Data</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Rajdhani:wght@400;500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+<script src="config.js"></script>
+<script src="web3-utils.js"></script>
+<style>
+:root {
+/* Red theme (default) */
+--primary: #c62828;
+--primary-light: #ff5f52;
+--primary-dark: #8e0000;
+--secondary: #ff5252;
+--dark: #1a0f0f;
+--dark-light: #2a1717;
+--text: #f5f5f5;
+--text-secondary: #b3b3b3;
+--success: #00cc66;
+--danger: #ff4d4d;
+}
+
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+
+body {
+font-family: 'Roboto', sans-serif;
+background-color: var(--dark);
+color: var(--text);
+line-height: 1.6;
+}
+
+.container {
+max-width: 1200px;
+margin: 0 auto;
+padding: 0 20px;
+}
+
+header {
+background: linear-gradient(to right, var(--primary-dark), var(--primary));
+padding: 12px 0;
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+position: sticky;
+top: 0;
+z-index: 100;
+}
+
+.header-content {
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+.logo {
+font-family: 'Orbitron', sans-serif;
+font-size: 28px;
+font-weight: 700;
+display: flex;
+align-items: center;
+}
+
+.logo-icon {
+margin-right: 10px;
+font-size: 32px;
+}
+
+nav ul {
+display: flex;
+list-style: none;
+}
+
+nav ul li {
+margin-left: 25px;
+}
+
+nav ul li a {
+color: var(--text);
+text-decoration: none;
+font-weight: 500;
+transition: color 0.3s;
+padding: 5px 10px;
+border-radius: 4px;
+}
+
+nav ul li a:hover {
+color: var(--secondary);
+}
+
+/* Lobby Button */
+.lobby-btn {
+background: linear-gradient(135deg, rgba(255, 90, 31, 0.2) 0%, rgba(255, 61, 46, 0.2) 100%);
+border: 1px solid rgba(255, 90, 31, 0.5);
+padding: 8px 16px !important;
+border-radius: 8px;
+font-weight: 700 !important;
+transition: all 0.3s ease;
+position: relative;
+overflow: hidden;
+}
+
+.lobby-btn::before {
+content: '';
+position: absolute;
+top: 0;
+left: -100%;
+right: 0;
+height: 100%;
+background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+transition: left 0.5s ease;
+}
+
+.lobby-btn:hover {
+background: linear-gradient(135deg, rgba(255, 90, 31, 0.3) 0%, rgba(255, 61, 46, 0.3) 100%);
+border-color: var(--primary);
+box-shadow: 0 0 20px rgba(255, 90, 31, 0.4), 0 0 40px rgba(255, 90, 31, 0.2);
+transform: translateY(-2px);
+}
+
+.lobby-btn:hover::before {
+left: 100%;
+}
+
+.lobby-btn .electric-text {
+color: var(--primary-light) !important;
+text-shadow: 0 0 10px rgba(255, 90, 31, 0.5);
+}
+
+.lobby-btn:hover .electric-text {
+color: #fff !important;
+text-shadow: 0 0 20px rgba(255, 90, 31, 0.8), 0 0 40px rgba(255, 90, 31, 0.4);
+}
+
+.hero {
+text-align: center;
+padding: 60px 0;
+background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23201210"/><path d="M0 0L100 100" stroke="%23ff5a1f" stroke-width="2"/><path d="M100 0L0 100" stroke="%23ff5a1f" stroke-width="2"/></svg>');
+background-size: cover;
+margin-bottom: 40px;
+}
+
+.hero h1 {
+font-family: 'Orbitron', sans-serif;
+font-size: 42px;
+margin-bottom: 20px;
+color: var(--secondary);
+}
+
+.hero p {
+font-size: 18px;
+max-width: 700px;
+margin: 0 auto 30px;
+color: var(--text-secondary);
+}
+
+.search-container {
+max-width: 600px;
+margin: 0 auto;
+position: relative;
+}
+
+.hero-quick-actions {
+margin-top: 14px;
+display: flex;
+justify-content: center;
+}
+
+.search-history {
+position: absolute;
+top: 100%;
+left: 0;
+right: 0;
+background-color: var(--dark-light);
+border-radius: 0 0 4px 4px;
+box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+z-index: 10;
+max-height: 0;
+overflow: hidden;
+transition: max-height 0.3s ease-in-out;
+}
+
+.history-title {
+padding: 10px 15px;
+font-size: 14px;
+color: var(--text-secondary);
+border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.history-items {
+max-height: 250px;
+overflow-y: auto;
+}
+
+.history-item {
+padding: 10px 15px;
+cursor: pointer;
+transition: background-color 0.2s;
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+.history-item:hover {
+background-color: rgba(255, 90, 31, 0.16);
+}
+
+.history-address {
+font-family: 'Orbitron', sans-serif;
+font-size: 14px;
+color: var(--secondary);
+}
+
+.history-time {
+font-size: 12px;
+color: var(--text-secondary);
+}
+
+.history-remove {
+color: var(--danger);
+background: none;
+border: none;
+cursor: pointer;
+font-size: 16px;
+padding: 0 5px;
+opacity: 0;
+transition: opacity 0.2s;
+}
+
+.history-item:hover .history-remove {
+opacity: 1;
+}
+
+.section-title {
+font-family: 'Orbitron', sans-serif;
+font-size: 28px;
+margin-bottom: 30px;
+color: var(--secondary);
+text-align: center;
+}
+
+.wallet-stats {
+background-color: var(--dark-light);
+border-radius: 8px;
+padding: 30px;
+margin-bottom: 40px;
+box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.wallet-header {
+display: flex;
+flex-wrap: wrap;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 30px;
+gap: 15px;
+}
+
+.wallet-address {
+font-family: 'Orbitron', sans-serif;
+font-size: 16px;
+color: var(--secondary);
+word-break: break-all;
+max-width: 500px;
+}
+
+.wallet-actions {
+display: flex;
+flex-wrap: wrap;
+align-items: center;
+gap: 10px;
+}
+
+.stats-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+gap: 20px;
+margin-bottom: 30px;
+}
+
+.stat-card {
+background-color: rgba(255, 90, 31, 0.16);
+border-radius: 8px;
+padding: 20px;
+text-align: center;
+transition: transform 0.3s;
+}
+
+.stat-card:hover {
+transform: translateY(-5px);
+}
+
+.stat-value {
+font-size: 32px;
+font-weight: 700;
+margin: 10px 0;
+font-family: 'Orbitron', sans-serif;
+}
+
+.profit {
+color: var(--success);
+}
+
+.loss {
+color: var(--danger);
+}
+
+.charts-grid {
+display: grid;
+grid-template-columns: 1fr;
+gap: 20px;
+margin-top: 30px;
+}
+
+@media (min-width: 768px) {
+    .charts-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.chart-container {
+background-color: rgba(0, 0, 0, 0.2);
+border-radius: 8px;
+padding: 20px;
+}
+
+.chart-title {
+font-family: 'Orbitron', sans-serif;
+font-size: 16px;
+color: var(--secondary);
+margin-bottom: 15px;
+text-align: center;
+}
+
+.duels-section {
+margin-bottom: 40px;
+}
+
+.duels-table {
+width: 100%;
+border-collapse: collapse;
+background-color: var(--dark-light);
+border-radius: 8px;
+overflow: hidden;
+}
+
+.duels-table th, .duels-table td {
+padding: 15px;
+text-align: left;
+border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.duels-table th {
+background-color: var(--primary);
+font-weight: 500;
+}
+
+/* Modern Table Styles */
+.duels-table, .live-feed-table {
+width: 100%;
+border-collapse: separate;
+border-spacing: 0;
+background: linear-gradient(135deg, rgba(26, 15, 15, 0.6) 0%, rgba(42, 23, 23, 0.4) 100%);
+border-radius: 16px;
+overflow: hidden;
+border: 1px solid rgba(255, 90, 31, 0.15);
+backdrop-filter: blur(10px);
+}
+
+.duels-table thead, .live-feed-table thead {
+background: linear-gradient(135deg, rgba(255, 90, 31, 0.2) 0%, rgba(255, 61, 46, 0.15) 100%);
+}
+
+.duels-table th, .live-feed-table th {
+font-family: 'Orbitron', sans-serif;
+font-size: 13px;
+font-weight: 600;
+text-transform: uppercase;
+letter-spacing: 1.2px;
+color: var(--primary-light);
+padding: 18px 20px;
+text-align: left;
+border-bottom: 2px solid rgba(255, 90, 31, 0.3);
+}
+
+.duels-table td, .live-feed-table td {
+padding: 16px 20px;
+border-bottom: 1px solid rgba(255, 90, 31, 0.08);
+transition: all 0.3s ease;
+}
+
+.duels-table tr:last-child td, .live-feed-table tr:last-child td {
+border-bottom: none;
+}
+
+.duels-table tr:hover td, .live-feed-table tr:hover td {
+background: linear-gradient(90deg, rgba(255, 90, 31, 0.15) 0%, rgba(255, 90, 31, 0.05) 100%);
+box-shadow: inset 0 0 20px rgba(255, 90, 31, 0.1);
+}
+
+.duels-table tr:hover {
+background-color: transparent;
+}
+
+.winner {
+color: var(--success);
+font-weight: 500;
+}
+
+.loser {
+color: var(--danger);
+font-weight: 500;
+}
+
+.vs-badge {
+display: inline-block;
+padding: 5px 10px;
+background-color: var(--primary);
+border-radius: 20px;
+font-size: 12px;
+margin: 0 10px;
+}
+
+.fee-info {
+background-color: rgba(0, 180, 216, 0.1);
+border: 1px solid var(--secondary);
+border-radius: 8px;
+padding: 15px;
+margin: 20px 0;
+font-size: 14px;
+color: var(--text-secondary);
+}
+
+.fee-info strong {
+color: var(--secondary);
+}
+
+footer {
+background-color: var(--dark-light);
+padding: 30px 0;
+text-align: center;
+margin-top: 60px;
+}
+
+.footer-content {
+display: flex;
+flex-direction: column;
+align-items: center;
+}
+
+.social-links {
+display: flex;
+margin: 20px 0;
+}
+
+.social-links a {
+display: flex;
+align-items: center;
+justify-content: center;
+width: 40px;
+height: 40px;
+border-radius: 50%;
+background-color: var(--primary);
+color: white;
+margin: 0 10px;
+text-decoration: none;
+transition: transform 0.3s;
+}
+
+.social-links a:hover {
+    transform: translateY(-3px);
+}
+
+/* Connection Status Styles */
+.connection-status {
+    display: flex;
+    align-items: center;
+    margin-left: 15px;
+    padding: 8px 12px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    transition: background-color 0.3s;
+}
+
+.status-indicator.online {
+    background-color: var(--success);
+    box-shadow: 0 0 6px var(--success);
+}
+
+.status-indicator.offline {
+    background-color: var(--danger);
+}
+
+.status-text {
+    font-weight: 500;
+}
+
+/* Loading States */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid var(--secondary);
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Error States */
+.error-state {
+    color: var(--danger);
+    text-align: center;
+    padding: 20px;
+    background-color: rgba(255, 77, 77, 0.1);
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+/* Real-time Updates */
+.real-time-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: var(--success);
+    border-radius: 50%;
+    margin-left: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Live Feed Styles */
+.live-feed-section {
+    background-color: var(--dark-light);
+    border-radius: 8px;
+    padding: 30px;
+    margin-bottom: 40px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.live-feed-container {
+    width: 100%;
+}
+
+.live-feed-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.feed-stats {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.feed-stat {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.feed-stat span {
+    color: var(--secondary);
+    font-weight: 500;
+}
+
+.live-feed-table-container {
+    overflow-x: auto;
+    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.live-feed-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+.live-feed-table th,
+.live-feed-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.live-feed-table th {
+    background-color: var(--primary);
+    font-weight: 500;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.live-feed-table tr:hover {
+    background-color: rgba(255, 90, 31, 0.1);
+}
+
+.live-feed-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+}
+
+.live-feed-pagination button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+#liveFeedPageIndicator {
+    color: var(--text-secondary);
+    font-size: 14px;
+    min-width: 140px;
+    text-align: center;
+}
+
+.wallet-link {
+    color: var(--secondary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.wallet-link:hover {
+    color: var(--secondary);
+    text-decoration: underline;
+}
+
+.wallet-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.copy-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+}
+
+.copy-btn:hover {
+    background-color: rgba(255, 90, 31, 0.16);
+    color: var(--secondary);
+    transform: scale(1.1);
+}
+
+.copy-btn:active {
+    transform: scale(0.95);
+}
+
+.copy-btn.copied {
+    color: var(--success);
+    background-color: rgba(40, 167, 69, 0.2);
+}
+
+.tx-link {
+    color: var(--secondary);
+    text-decoration: none;
+    font-size: 12px;
+    padding: 4px 8px;
+    background-color: rgba(255, 90, 31, 0.2);
+    border-radius: 4px;
+    transition: background-color 0.3s;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.tx-link:hover {
+    background-color: rgba(255, 90, 31, 0.3);
+    text-decoration: none;
+}
+
+.status-pending {
+    color: #ff8c00;
+    font-weight: 500;
+}
+
+.status-active {
+    color: #ff3d2e;
+    font-weight: 500;
+}
+
+.status-completed {
+    color: var(--success);
+    font-weight: 500;
+}
+
+.status-cancelled {
+    color: var(--danger);
+    font-weight: 500;
+}
+
+.cancelled {
+    color: var(--danger);
+    font-weight: 500;
+}
+
+.active {
+    color: #ff3d2e;
+    font-weight: 500;
+}
+
+.pending {
+    color: #ff8c00;
+    font-weight: 500;
+}
+
+.transaction-status {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.transaction-status.pending {
+    background-color: rgba(255, 140, 0, 0.2);
+    color: #ff8c00;
+}
+
+.transaction-status.active {
+    background-color: rgba(255, 90, 31, 0.2);
+    color: #ff3d2e;
+}
+
+.transaction-status.completed {
+    background-color: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+}
+
+.transaction-status.cancelled {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+.result-winner {
+    color: var(--success);
+    font-weight: 500;
+}
+
+.result-loser {
+    color: var(--danger);
+    font-weight: 500;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background-color: var(--dark-light);
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    background: linear-gradient(to right, var(--primary-dark), var(--primary));
+    padding: 20px 30px;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 24px;
+    color: var(--text);
+    margin: 0;
+}
+
+.modal-close {
+    color: var(--text);
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.modal-close:hover {
+    color: var(--secondary);
+}
+
+.modal-body {
+    padding: 30px;
+}
+
+.duel-info {
+    background-color: rgba(255, 90, 31, 0.1);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+    border: 1px solid rgba(255, 90, 31, 0.3);
+}
+
+.duel-players {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.player-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.player-label {
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.duel-wager {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.wager-label {
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.wager-amount {
+    color: var(--secondary);
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.transactions-section h3 {
+    color: var(--secondary);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+    margin-bottom: 20px;
+}
+
+.transactions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.transaction-item {
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: border-color 0.3s;
+}
+
+.transaction-item:hover {
+    border-color: var(--secondary);
+}
+
+.transaction-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.transaction-type {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.transaction-type.join-battle {
+    color: #ff8c00;
+}
+
+.transaction-type.duel-completed {
+    color: var(--success);
+}
+
+.transaction-type.funds-released {
+    color: var(--secondary);
+}
+
+.transaction-hash {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.transaction-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.transaction-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.transaction-detail-label {
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.transaction-detail-value {
+    color: var(--text);
+    font-weight: 500;
+}
+
+.transaction-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--secondary);
+    text-decoration: none;
+    font-size: 12px;
+    padding: 4px 8px;
+    background-color: rgba(255, 90, 31, 0.2);
+    border-radius: 4px;
+    transition: background-color 0.3s;
+    margin-top: 10px;
+}
+
+.transaction-link:hover {
+    background-color: rgba(255, 90, 31, 0.3);
+    text-decoration: none;
+}
+
+.loading-transactions {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 40px;
+    font-style: italic;
+}
+
+.no-transactions {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 40px;
+    font-style: italic;
+}
+
+/* Responsive Modal */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        margin: 10% auto;
+        max-height: 85vh;
+    }
+    
+    .modal-header {
+        padding: 15px 20px;
+    }
+    
+    .modal-title {
+        font-size: 20px;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+    
+    .duel-players {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .transaction-details {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+.header-content {
+flex-direction: column;
+}
+
+nav ul {
+margin-top: 20px;
+}
+
+.stats-grid {
+grid-template-columns: 1fr;
+}
+
+.wallet-header {
+flex-direction: column;
+text-align: center;
+}
+
+.wallet-actions {
+margin-top: 20px;
+}
+}
+</style>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="super-shell.css">
+<style>
+/* Home-only tweaks (electric styles live in super-shell.css) */
+.hero.hero-super h1.hero-home-title {
+  margin-bottom: 20px;
+  animation: none;
+  border: none;
+  padding: 0;
+}
+
+.hero-inline-link {
+  color: var(--secondary);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 122, 60, 0.45);
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.hero-inline-link:hover {
+color: #ffd5c8;
+border-bottom-color: rgba(255, 200, 170, 0.75);
+}
+
+.hero-lobby-wrapper {
+position: relative;
+max-width: 600px;
+margin: 0 auto;
+}
+
+/* Lobby Side Tab */
+.lobby-side-tab {
+position: fixed;
+top: 85px;
+right: 20px;
+z-index: 999;
+}
+
+.lobby-side-tab .btn-lobby {
+background: linear-gradient(135deg, rgba(255, 90, 31, 0.25) 0%, rgba(255, 61, 46, 0.25) 100%);
+border: 1px solid rgba(255, 90, 31, 0.6);
+padding: 8px 14px;
+border-radius: 6px;
+font-weight: 700;
+transition: all 0.3s ease;
+text-decoration: none;
+color: var(--text);
+font-size: 11px;
+white-space: nowrap;
+box-shadow: 0 4px 15px rgba(255, 90, 31, 0.3);
+cursor: pointer;
+display: inline-block;
+}
+
+.lobby-side-tab .btn-lobby:hover {
+background: linear-gradient(135deg, rgba(255, 90, 31, 0.4) 0%, rgba(255, 61, 46, 0.4) 100%);
+border-color: var(--primary);
+box-shadow: 0 0 25px rgba(255, 90, 31, 0.6), 0 8px 35px rgba(255, 90, 31, 0.4);
+transform: translateY(-2px);
+}
+
+/* Lobby Modal */
+.lobby-modal {
+display: none;
+position: fixed;
+z-index: 10000;
+left: 0;
+top: 0;
+width: 100%;
+height: 100%;
+background-color: rgba(0, 0, 0, 0.8);
+backdrop-filter: blur(5px);
+}
+
+.lobby-modal-content {
+background: linear-gradient(135deg, rgba(26, 15, 15, 0.98) 0%, rgba(42, 23, 23, 0.98) 100%);
+margin: 15% auto;
+padding: 40px;
+border: 2px solid rgba(255, 90, 31, 0.5);
+border-radius: 16px;
+width: 90%;
+max-width: 500px;
+box-shadow: 0 20px 60px rgba(255, 90, 31, 0.4), 0 0 100px rgba(255, 90, 31, 0.2);
+position: relative;
+animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+from {
+opacity: 0;
+transform: translateY(-50px);
+}
+to {
+opacity: 1;
+transform: translateY(0);
+}
+}
+
+.lobby-modal-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 25px;
+padding-bottom: 20px;
+border-bottom: 1px solid rgba(255, 90, 31, 0.3);
+}
+
+.lobby-modal-title {
+font-family: 'Orbitron', sans-serif;
+font-size: 24px;
+font-weight: 700;
+color: var(--primary-light);
+margin: 0;
+}
+
+.lobby-modal-close {
+color: var(--text-secondary);
+font-size: 28px;
+font-weight: bold;
+cursor: pointer;
+transition: color 0.3s;
+background: none;
+border: none;
+padding: 0;
+line-height: 1;
+}
+
+.lobby-modal-close:hover {
+color: var(--primary);
+}
+
+.lobby-modal-body {
+margin-bottom: 30px;
+}
+
+.lobby-modal-text {
+font-size: 16px;
+color: var(--text-secondary);
+line-height: 1.6;
+margin-bottom: 0;
+}
+
+.lobby-modal-actions {
+display: flex;
+gap: 15px;
+justify-content: flex-end;
+}
+
+.lobby-modal-btn {
+padding: 12px 28px;
+border-radius: 8px;
+font-weight: 600;
+font-size: 15px;
+cursor: pointer;
+transition: all 0.3s;
+border: none;
+font-family: 'Rajdhani', sans-serif;
+text-transform: uppercase;
+letter-spacing: 1px;
+}
+
+.lobby-modal-btn-yes {
+background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+color: white;
+box-shadow: 0 4px 15px rgba(255, 90, 31, 0.4);
+}
+
+.lobby-modal-btn-yes:hover {
+background: linear-gradient(135deg, var(--primary-light) 0%, var(--secondary-light) 100%);
+box-shadow: 0 6px 25px rgba(255, 90, 31, 0.6);
+transform: translateY(-2px);
+}
+
+.lobby-modal-btn-no {
+background: rgba(255, 255, 255, 0.1);
+color: var(--text);
+border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.lobby-modal-btn-no:hover {
+background: rgba(255, 255, 255, 0.15);
+border-color: rgba(255, 255, 255, 0.3);
+}
+
+.btn-lobby:hover {
+background: linear-gradient(135deg, rgba(255, 90, 31, 0.4) 0%, rgba(255, 61, 46, 0.4) 100%);
+border-color: var(--primary);
+box-shadow: 0 0 25px rgba(255, 90, 31, 0.6), 0 8px 35px rgba(255, 90, 31, 0.4);
+transform: translateY(-2px);
+}
+
+.btn-lobby .electric-text {
+color: var(--primary-light);
+text-shadow: 0 0 10px rgba(255, 90, 31, 0.5);
+}
+
+.btn-lobby:hover .electric-text {
+color: #fff;
+text-shadow: 0 0 20px rgba(255, 90, 31, 0.8), 0 0 40px rgba(255, 90, 31, 0.4);
+}
+
+@media (max-width: 768px) {
+.btn-lobby {
+position: static;
+display: inline-block;
+margin-top: 15px;
+}
+
+.hero-lobby-wrapper {
+display: flex;
+flex-direction: column;
+align-items: center;
+}
+
+.hero-quick-actions {
+margin-top: 15px;
+}
+}
+
+</style>
 </head>
-<body>
-    <p>Redirecting to <a href="./index.html">Cambria Duel Arena Tracker</a>...</p>
+<body class="page-home">
+<a href="#main-content" class="skip-link">Skip to main content</a>
+<canvas id="wind" aria-hidden="true"></canvas>
+<div class="tech-grid" aria-hidden="true"></div>
+<div class="galaxy-vignette" aria-hidden="true"></div>
+
+<header class="navbar" role="banner">
+<div class="container nav-container">
+<a href="index.html" class="logo"><img src="assets/cambria-emblem.png" alt="" class="logo-mark" width="44" height="44" decoding="async" /><span class="electric-text-wrap electric-text-wrap--nav"><span class="electric-text electric-text--nav">Cambria Duel Arena Data</span></span></a>
+<button type="button" class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links"><span></span><span></span><span></span></button>
+<nav aria-label="Main navigation">
+<ul class="nav-links" id="nav-links">
+<li><a href="index.html" class="active">Home</a></li>
+<li><a href="wallet.html">Wallet</a></li>
+<li><a href="leaderboard.html">Leaderboard</a></li>
+<li><a href="statistics.html">Statistics</a></li>
+<li><a href="about.html">About</a></li>
+<li><a href="donate.html">Donate</a></li>
+</ul>
+</nav>
+</div>
+</header>
+
+<section class="hero hero-super">
+<div class="hero-glow hero-glow-1" aria-hidden="true"></div>
+<div class="hero-glow hero-glow-2" aria-hidden="true"></div>
+<div class="container hero-inner">
+<div class="hero-badge"><span class="badge-pulse" aria-hidden="true"></span><span>Abstract L2 · Live on-chain duels</span></div>
+<h1 class="hero-home-title"><span class="electric-text-wrap"><span class="electric-text electric-text--hero">Cambria Duel Arena Data</span></span></h1>
+<p>The live arena feed for Cambria — Abstract L2.</p>
+<div class="hero-lobby-wrapper">
+<div class="search-container">
+<div class="search-box">
+<input type="text" class="search-input" placeholder="Enter wallet address..." id="walletSearchInput">
+<button class="search-btn" id="searchBtn">Search</button>
+</div>
+<div class="hero-quick-actions">
+<button type="button" class="btn-live-feed" id="scrollToLiveFeedBtn">Live feed</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Lobby Side Tab -->
+<div class="lobby-side-tab">
+<button type="button" class="btn-lobby" id="openLobbyModal">
+<span class="electric-text-wrap"><span class="electric-text">⚡ Cambria Lobby</span></span>
+</button>
+</div>
+
+<!-- Lobby Modal -->
+<div id="lobbyModal" class="lobby-modal">
+<div class="lobby-modal-content">
+<div class="lobby-modal-header">
+<h3 class="lobby-modal-title">Redirect to Cambria Lobby</h3>
+<button type="button" class="lobby-modal-close" id="closeLobbyModal">&times;</button>
+</div>
+<div class="lobby-modal-body">
+<p class="lobby-modal-text">You are about to leave Cambria Duel Arena Data and be redirected to the official Cambria Lobby.</p>
+</div>
+<div class="lobby-modal-actions">
+<button type="button" class="lobby-modal-btn lobby-modal-btn-no" id="cancelLobbyRedirect">No</button>
+<a href="https://lobby.cambria.gg/" class="lobby-modal-btn lobby-modal-btn-yes" id="confirmLobbyRedirect" target="_blank" rel="noopener noreferrer">Yes</a>
+</div>
+</div>
+</div>
+            <div class="search-history" id="searchHistory">
+                <div class="history-title">Recent Searches</div>
+                <div class="history-items" id="historyItems">
+                    <!-- Search history items will be added here -->
+                </div>
+            </div>
+        </div>
+</div>
+<div class="hero-scroll" aria-hidden="true"><div class="scroll-indicator"><div class="scroll-dot"></div></div></div>
+</section>
+
+<main class="container" id="main-content">
+
+<section class="live-feed-section" id="live-feed-section" data-tilt>
+<div class="super-section-head">
+<span class="section-tag">Arena feed</span>
+<h2 class="section-title">Live Duel Activity <span class="real-time-indicator"></span></h2>
+<div class="section-line"></div>
+</div>
+    <div class="live-feed-container">
+        <div class="live-feed-header">
+            <div class="feed-stats">
+                <span class="feed-stat">Total duels: <span id="totalDuelsCount">-</span></span>
+                <span class="feed-stat">Pending (this page): <span id="pendingDuelsCount">-</span></span>
+                <span class="feed-stat">Completed (this page): <span id="completedDuelsCount">-</span></span>
+            </div>
+            <button class="search-btn" id="refreshFeedBtn">Refresh Feed</button>
+        </div>
+        <div class="live-feed-table-container">
+            <table class="live-feed-table" id="liveFeedTable">
+                <thead>
+                    <tr>
+                        <th>Duel ID</th>
+                        <th>Players</th>
+                        <th>Wager</th>
+                        <th>Status</th>
+                        <th>Result</th>
+                        <th>Transaction</th>
+                    </tr>
+                </thead>
+                <tbody id="liveFeedTableBody">
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-secondary);">Loading live duel activity...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="live-feed-pagination" id="liveFeedPagination" role="navigation" aria-label="Live feed pages">
+            <button type="button" class="search-btn" id="liveFeedPrevBtn" disabled>Previous</button>
+            <span id="liveFeedPageIndicator">Page —</span>
+            <button type="button" class="search-btn" id="liveFeedNextBtn" disabled>Next</button>
+        </div>
+    </div>
+</section>
+
+</main>
+
+<footer>
+<div class="container">
+<div class="footer-content">
+<div class="logo">
+<img src="assets/cambria-emblem.png" alt="" class="logo-mark" width="36" height="36" decoding="async" />
+<span>Cambria Duel Arena Data</span>
+</div>
+<p>Track and analyze Cambria Duel Arena data on the Abstract L2 chain</p>
+<div class="social-links">
+<a href="https://x.com/playdegenarena" target="_blank" rel="noopener noreferrer"><span>𝕏</span></a>
+</div>
+<p>© 2023 Cambria Duel Arena Data. Not affiliated with @playcambria.</p>
+</div>
+    </div>
+</footer>
+
+<!-- Duel Transactions Modal -->
+<div id="duelModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Duel #<span id="modalDuelId"></span> Transactions</h2>
+            <span class="modal-close">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="duel-info">
+                <div class="duel-players">
+                    <div class="player-info">
+                        <span class="player-label">Player 1:</span>
+                        <div class="wallet-container">
+                            <a href="#" id="modalPlayer1Link" class="wallet-link" target="_blank"></a>
+                            <button class="copy-btn" onclick="copyWalletAddress('modalPlayer1Link')" title="Copy wallet address">
+                                📋
+                            </button>
+                        </div>
+                    </div>
+                    <div class="player-info">
+                        <span class="player-label">Player 2:</span>
+                        <div class="wallet-container">
+                            <a href="#" id="modalPlayer2Link" class="wallet-link" target="_blank"></a>
+                            <button class="copy-btn" onclick="copyWalletAddress('modalPlayer2Link')" title="Copy wallet address">
+                                📋
+                            </button>
+                        </div>
+                    </div>
+                    <div class="duel-wager">
+                        <span class="wager-label">Wager:</span>
+                        <span id="modalWager" class="wager-amount"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="transactions-section">
+                <h3>Related Transactions</h3>
+                <div class="transactions-list" id="transactionsList">
+                    <div class="loading-transactions">Loading transactions...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Cambria Duel Arena Data — home & live feed
+let liveFeedPage = 1;
+
+function liveFeedPageSize() {
+    return (CONFIG && CONFIG.UI && CONFIG.UI.LIVE_FEED_PAGE_SIZE) || 100;
+}
+
+function openWalletPage(address) {
+    const a = String(address || '').trim();
+    if (!isValidAddress(a)) return;
+    window.location.href = 'wallet.html?address=' + encodeURIComponent(a);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeApp();
+});
+
+async function initializeApp() {
+    setupEventListeners();
+    await tryAutoConnect();
+    await window.cambriaWeb3.waitForApiServerCheck();
+    setupRealTimeUpdates();
+    await loadLiveFeed(false);
+    if (window.location.hash === '#live-feed-section') {
+        requestAnimationFrame(function () {
+            scrollToSectionById('live-feed-section');
+        });
+    }
+}
+
+function scrollToSectionById(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const nav = document.querySelector('header.navbar');
+    const navH = nav ? Math.round(nav.getBoundingClientRect().height) : 68;
+    const gap = 16;
+    const top = el.getBoundingClientRect().top + window.scrollY - navH - gap;
+    window.scrollTo({
+        top: Math.max(0, top),
+        behavior: smooth ? 'smooth' : 'auto'
+    });
+}
+
+function setupEventListeners() {
+    const searchBtn = document.getElementById('searchBtn');
+    const searchInput = document.getElementById('walletSearchInput');
+    const scrollToLiveFeedBtn = document.getElementById('scrollToLiveFeedBtn');
+    const refreshFeedBtn = document.getElementById('refreshFeedBtn');
+    
+    searchBtn.addEventListener('click', handleWalletSearch);
+    if (scrollToLiveFeedBtn) {
+        scrollToLiveFeedBtn.addEventListener('click', function () {
+            scrollToSectionById('live-feed-section');
+        });
+    }
+    refreshFeedBtn.addEventListener('click', handleRefreshFeed);
+
+    const liveFeedPrevBtn = document.getElementById('liveFeedPrevBtn');
+    const liveFeedNextBtn = document.getElementById('liveFeedNextBtn');
+    if (liveFeedPrevBtn) {
+        liveFeedPrevBtn.addEventListener('click', async function () {
+            if (liveFeedPage <= 1) return;
+            liveFeedPage -= 1;
+            await loadLiveFeed(false);
+        });
+    }
+    if (liveFeedNextBtn) {
+        liveFeedNextBtn.addEventListener('click', async function () {
+            const p = window.lastLiveFeedPayload;
+            if (!p || !p.hasNext) return;
+            liveFeedPage += 1;
+            await loadLiveFeed(false);
+        });
+    }
+    
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            handleWalletSearch();
+        }
+    });
+    
+    // Load search history
+    loadSearchHistory();
+    
+    // Search input focus event for showing history
+    searchInput.addEventListener('focus', function() {
+        const searchHistory = document.getElementById('searchHistory');
+        if (searchHistory) {
+            searchHistory.style.display = 'block';
+        }
+    });
+    
+    
+// Modal functionality
+setupModalEventListeners();
+setupLobbyModalEventListeners();
+
+// Listen for Web3 events
+window.cambriaWeb3.addEventListener('duelStarted', handleNewDuel);
+window.cambriaWeb3.addEventListener('duelCompleted', handleDuelCompleted);
+}
+
+
+function setupModalEventListeners() {
+    const modal = document.getElementById('duelModal');
+    const closeBtn = document.querySelector('.modal-close');
+    
+    // Close modal when clicking X
+    closeBtn.addEventListener('click', closeModal);
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && modal.style.display === 'block') {
+            closeModal();
+        }
+    });
+}
+
+async function tryAutoConnect() {
+    try {
+        // Initialize Web3 in read-only mode
+        const success = await window.cambriaWeb3.initialize();
+        if (success) {
+            updateConnectionStatus(true);
+        } else {
+            updateConnectionStatus(false);
+        }
+    } catch (error) {
+        console.log('Auto-connect failed:', error);
+        updateConnectionStatus(false);
+    }
+}
+
+async function handleWalletSearch() {
+    const walletAddress = document.getElementById('walletSearchInput').value.trim();
+    
+    if (!walletAddress) {
+        window.cambriaWeb3.showError('Please enter a wallet address');
+        return;
+    }
+    
+    if (!isValidAddress(walletAddress)) {
+        window.cambriaWeb3.showError('Invalid wallet address format');
+        return;
+    }
+    
+    addToSearchHistory(walletAddress);
+    window.location.href = 'wallet.html?address=' + encodeURIComponent(walletAddress);
+}
+
+// Search history management
+function loadSearchHistory() {
+    try {
+        const historyItems = document.getElementById('historyItems');
+        historyItems.innerHTML = '';
+        
+        const searchHistory = JSON.parse(localStorage.getItem('cambriaSearchHistory')) || [];
+        
+        if (searchHistory.length === 0) {
+            historyItems.innerHTML = '<div class="history-item">No recent searches</div>';
+            return;
+        }
+        
+        // Sort by timestamp (newest first)
+        searchHistory.sort((a, b) => b.timestamp - a.timestamp);
+        
+        // Display only the most recent 10 searches
+        const recentSearches = searchHistory.slice(0, 10);
+        
+        recentSearches.forEach(item => {
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item';
+            
+            const timeAgo = getTimeAgo(item.timestamp);
+            
+            historyItem.innerHTML = `
+                <div class="history-address" onclick="openWalletPage('${item.address}')">${window.cambriaWeb3.formatAddress(item.address)}</div>
+                <div class="history-time">${timeAgo}</div>
+                <button class="history-remove" onclick="removeFromSearchHistory('${item.address}', event)">×</button>
+            `;
+            
+            historyItems.appendChild(historyItem);
+        });
+    } catch (error) {
+        console.error('Error loading search history:', error);
+    }
+}
+
+function addToSearchHistory(address) {
+    try {
+        // Get current history
+        const searchHistory = JSON.parse(localStorage.getItem('cambriaSearchHistory')) || [];
+        
+        // Check if address already exists
+        const existingIndex = searchHistory.findIndex(item => item.address === address);
+        
+        // If it exists, remove it (we'll add it back at the top)
+        if (existingIndex !== -1) {
+            searchHistory.splice(existingIndex, 1);
+        }
+        
+        // Add the new search
+        searchHistory.push({
+            address: address,
+            timestamp: Date.now()
+        });
+        
+        // Limit to 20 most recent searches
+        if (searchHistory.length > 20) {
+            searchHistory.sort((a, b) => b.timestamp - a.timestamp);
+            searchHistory.splice(20);
+        }
+        
+        // Save back to localStorage
+        localStorage.setItem('cambriaSearchHistory', JSON.stringify(searchHistory));
+        
+        // Refresh the displayed history
+        loadSearchHistory();
+    } catch (error) {
+        console.error('Error adding to search history:', error);
+    }
+}
+
+function removeFromSearchHistory(address, event) {
+    try {
+        // Stop the click from bubbling up to the parent
+        event.stopPropagation();
+        
+        // Get current history
+        const searchHistory = JSON.parse(localStorage.getItem('cambriaSearchHistory')) || [];
+        
+        // Filter out the address
+        const newHistory = searchHistory.filter(item => item.address !== address);
+        
+        // Save back to localStorage
+        localStorage.setItem('cambriaSearchHistory', JSON.stringify(newHistory));
+        
+        // Refresh the displayed history
+        loadSearchHistory();
+    } catch (error) {
+        console.error('Error removing from search history:', error);
+    }
+}
+
+function getTimeAgo(timestamp) {
+    const now = Date.now();
+    const seconds = Math.floor((now - timestamp) / 1000);
+    
+    if (seconds < 60) return 'just now';
+    
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    
+    const date = new Date(timestamp);
+    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+}
+
+async function loadLiveFeed(resetToFirstPage) {
+    try {
+        setLoadingState(true);
+        if (resetToFirstPage) {
+            liveFeedPage = 1;
+        }
+        await window.cambriaWeb3.waitForApiServerCheck();
+        const pageSize = liveFeedPageSize();
+        const payload = await window.cambriaWeb3.getLiveFeedPage({
+            page: liveFeedPage,
+            pageSize
+        });
+        updateLiveFeed(payload);
+    } catch (error) {
+        console.error('Error loading live feed:', error);
+        updateLiveFeed(window.cambriaWeb3.emptyLiveFeedPage(liveFeedPage, liveFeedPageSize()));
+        window.cambriaWeb3.showError('Failed to load live feed. Run the local API (`node server.js`) or connect RPC.');
+    } finally {
+        setLoadingState(false);
+    }
+}
+
+function updateLiveFeed(payload) {
+    const tbody = document.getElementById('liveFeedTableBody');
+    tbody.innerHTML = '';
+
+    let data = payload;
+    if (Array.isArray(payload)) {
+        data = {
+            total: payload.length,
+            page: 1,
+            pageSize: payload.length || liveFeedPageSize(),
+            totalPages: payload.length ? 1 : 0,
+            hasNext: false,
+            hasPrevious: false,
+            duels: payload
+        };
+    }
+    if (!data || typeof data !== 'object') {
+        data = window.cambriaWeb3.emptyLiveFeedPage(1, liveFeedPageSize());
+    }
+
+    window.lastLiveFeedPayload = data;
+    const duels = data.duels || [];
+    const total = data.total != null ? Number(data.total) : 0;
+    const page = data.page != null ? Number(data.page) : liveFeedPage;
+    const totalPages =
+        data.totalPages != null
+            ? Number(data.totalPages)
+            : total > 0
+              ? Math.ceil(total / (data.pageSize || liveFeedPageSize()))
+              : 0;
+
+    liveFeedPage = Math.max(1, page);
+
+    document.getElementById('totalDuelsCount').textContent =
+        total.toLocaleString();
+    const pendingDuels = duels.filter((d) => d.status === 'pending').length;
+    const completedDuels = duels.filter((d) => d.status === 'completed').length;
+    document.getElementById('pendingDuelsCount').textContent = pendingDuels;
+    document.getElementById('completedDuelsCount').textContent = completedDuels;
+
+    const pageInd = document.getElementById('liveFeedPageIndicator');
+    if (pageInd) {
+        pageInd.textContent =
+            totalPages > 0
+                ? `Page ${liveFeedPage} of ${totalPages}`
+                : total > 0
+                  ? `Page ${liveFeedPage}`
+                  : 'Page —';
+    }
+    const prevBtn = document.getElementById('liveFeedPrevBtn');
+    const nextBtn = document.getElementById('liveFeedNextBtn');
+    if (prevBtn) prevBtn.disabled = !data.hasPrevious;
+    if (nextBtn) nextBtn.disabled = !data.hasNext;
+
+    if (!duels.length) {
+        const emptyMsg =
+            total === 0
+                ? 'No duel activity indexed yet. Run the indexer and open this site via the local API.'
+                : 'No duels on this page.';
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">${emptyMsg}</td></tr>`;
+        return;
+    }
+
+    duels.forEach((duel) => {
+        const row = document.createElement('tr');
+        const player1Link = `<a href="wallet.html?address=${encodeURIComponent(duel.player1)}" class="wallet-link">${window.cambriaWeb3.formatAddress(duel.player1)}</a>`;
+        const player2Link = `<a href="wallet.html?address=${encodeURIComponent(duel.player2)}" class="wallet-link">${window.cambriaWeb3.formatAddress(duel.player2)}</a>`;
+        const txButton = duel.transactionHash
+            ? `<button type="button" class="tx-link" onclick="showDuelModal('${duel.id}', '${duel.player1}', '${duel.player2}', ${Number(duel.wager)})">View TX</button>`
+            : '<span style="color: var(--text-secondary); font-size: 13px;">—</span>';
+        
+        let statusHtml = `<span class="status-${duel.status}">${duel.status.charAt(0).toUpperCase() + duel.status.slice(1)}</span>`;
+        let resultHtml = '-';
+        
+        if (duel.status === 'completed') {
+            const winnerLink = `<a href="wallet.html?address=${encodeURIComponent(duel.winner)}" class="wallet-link result-winner">${window.cambriaWeb3.formatAddress(duel.winner)}</a>`;
+            resultHtml = `Winner: ${winnerLink}`;
+        } else if (duel.status === 'cancelled') {
+            resultHtml = 'Cancelled';
+        } else if (duel.status === 'active') {
+            resultHtml = 'In Progress';
+        } else if (duel.status === 'pending') {
+            resultHtml = 'Waiting for Player 2';
+        }
+        
+        row.innerHTML = `
+            <td>#${duel.id}</td>
+            <td>
+                ${player1Link}
+                <span class="vs-badge">VS</span>
+                ${player2Link}
+            </td>
+            <td>${Number(duel.wager).toFixed(3)} ETH</td>
+            <td>${statusHtml}</td>
+            <td>${resultHtml}</td>
+            <td>${txButton}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+async function handleRefreshFeed() {
+    try {
+        await loadLiveFeed(true);
+        window.cambriaWeb3.showSuccess('Live feed refreshed!');
+    } catch (error) {
+        console.error('Error refreshing feed:', error);
+        window.cambriaWeb3.showError('Failed to refresh feed');
+    }
+}
+
+function setupRealTimeUpdates() {
+    const canPoll = () => window.cambriaWeb3.isConnected || window.cambriaWeb3.useApiServer;
+    setInterval(async () => {
+        if (canPoll()) {
+            try {
+                await loadLiveFeed(false);
+            } catch (error) {
+                console.error('Real-time update failed:', error);
+            }
+        }
+    }, CONFIG.UI.REFRESH_INTERVAL);
+}
+
+function handleNewDuel(data) {
+    console.log('New duel detected:', data);
+    // Update UI to show new duel
+    window.cambriaWeb3.showSuccess(`New duel started: ${data.wager} ETH`);
+}
+
+function handleDuelCompleted(data) {
+    console.log('Duel completed:', data);
+    window.cambriaWeb3.showSuccess(`Duel completed! Winner: ${window.cambriaWeb3.formatAddress(data.winner)}`);
+    setTimeout(() => {
+        loadLiveFeed(false).catch(() => {});
+    }, 2000);
+}
+
+function updateConnectionStatus(isConnected) {
+    const statusIndicator = document.querySelector('.status-indicator');
+    const statusText = document.querySelector('.status-text');
+    if (!statusIndicator || !statusText) return;
+    if (isConnected) {
+        statusIndicator.className = 'status-indicator online';
+        statusText.textContent = 'Connected';
+    } else {
+        statusIndicator.className = 'status-indicator offline';
+        statusText.textContent = 'Offline';
+    }
+}
+
+function setLoadingState(isLoading) {
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(btn => {
+        if (isLoading) {
+            btn.classList.add('loading');
+            btn.disabled = true;
+        } else {
+            btn.classList.remove('loading');
+            btn.disabled = false;
+        }
+    });
+}
+
+function isValidAddress(address) {
+    return /^0x[a-fA-F0-9]{40}$/.test(address);
+}
+
+// Modal Functions
+async function showDuelModal(duelId, player1, player2, wager) {
+    const modal = document.getElementById('duelModal');
+    
+    // Update modal header with duel info
+    document.getElementById('modalDuelId').textContent = duelId;
+    document.getElementById('modalPlayer1Link').textContent = window.cambriaWeb3.formatAddress(player1);
+    document.getElementById('modalPlayer1Link').href = window.cambriaWeb3.generateWalletLink(player1);
+    document.getElementById('modalPlayer2Link').textContent = window.cambriaWeb3.formatAddress(player2);
+    document.getElementById('modalPlayer2Link').href = window.cambriaWeb3.generateWalletLink(player2);
+    document.getElementById('modalWager').textContent = `${wager.toFixed(3)} ETH`;
+    
+    // Show modal
+    modal.style.display = 'block';
+    
+    // Load transactions
+    await loadDuelTransactions(duelId);
+}
+
+function closeModal() {
+    const modal = document.getElementById('duelModal');
+    modal.style.display = 'none';
+}
+
+// Copy wallet address to clipboard
+async function copyWalletAddress(linkElementId) {
+    try {
+        const linkElement = document.getElementById(linkElementId);
+        const walletAddress = linkElement.href.split('/').pop(); // Extract address from the link
+        
+        // Copy to clipboard
+        await navigator.clipboard.writeText(walletAddress);
+        
+        // Visual feedback
+        const copyBtn = linkElement.parentElement.querySelector('.copy-btn');
+        const originalText = copyBtn.innerHTML;
+        copyBtn.innerHTML = '✓';
+        copyBtn.classList.add('copied');
+        
+        // Reset after 2 seconds
+        setTimeout(() => {
+            copyBtn.innerHTML = originalText;
+            copyBtn.classList.remove('copied');
+        }, 2000);
+        
+        // Show success message
+        if (window.cambriaWeb3 && window.cambriaWeb3.showSuccess) {
+            window.cambriaWeb3.showSuccess('Wallet address copied to clipboard!');
+        }
+        
+    } catch (error) {
+        console.error('Failed to copy wallet address:', error);
+        
+        // Fallback for older browsers
+        try {
+            const linkElement = document.getElementById(linkElementId);
+            const walletAddress = linkElement.href.split('/').pop();
+            
+            // Create a temporary textarea
+            const textArea = document.createElement('textarea');
+            textArea.value = walletAddress;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            // Visual feedback
+            const copyBtn = linkElement.parentElement.querySelector('.copy-btn');
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '✓';
+            copyBtn.classList.add('copied');
+            
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+                copyBtn.classList.remove('copied');
+            }, 2000);
+            
+        } catch (fallbackError) {
+            console.error('Fallback copy failed:', fallbackError);
+            alert('Failed to copy wallet address. Please copy manually.');
+        }
+    }
+}
+
+async function loadDuelTransactions(duelId) {
+    const transactionsList = document.getElementById('transactionsList');
+    transactionsList.innerHTML = '<div class="loading-transactions">Loading transactions...</div>';
+    
+    try {
+        await window.cambriaWeb3.waitForApiServerCheck();
+        const transactions = await window.cambriaWeb3.getDuelTransactions(duelId);
+        displayTransactions(transactions);
+    } catch (error) {
+        console.error('Error loading duel transactions:', error);
+        displayTransactions([]);
+        window.cambriaWeb3.showError('Failed to load duel transactions. Use the local API or connect RPC.');
+    }
+}
+
+function displayTransactions(transactions) {
+    const transactionsList = document.getElementById('transactionsList');
+    
+    if (transactions.length === 0) {
+        transactionsList.innerHTML = '<div class="no-transactions">No transactions found for this duel.</div>';
+        return;
+    }
+    
+    transactionsList.innerHTML = '';
+    
+    // Display exactly 3 transaction boxes in order
+    const box1 = transactions.find(tx => tx.type === 'Duel Initiation');
+    const box2 = transactions.find(tx => tx.type === 'Duel Joining');
+    const box3 = transactions.find(tx => tx.type === 'Duel Completion' || tx.type === 'Duel Cancellation');
+    
+    // Box 1: Duel Initiation (initBattle) → Status: Pending
+    if (box1) {
+        const transactionItem = document.createElement('div');
+        transactionItem.className = 'transaction-item';
+        
+        transactionItem.innerHTML = `
+            <div class="transaction-header">
+                <div class="transaction-type ${box1.typeClass}">${box1.type}</div>
+                <div class="transaction-status pending">Status: ${box1.status}</div>
+            </div>
+            <div class="transaction-details">
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Duel ID</div>
+                    <div class="transaction-detail-value">#${box1.duelId != null && box1.duelId !== '' ? box1.duelId : '—'}</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Player 1</div>
+                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(box1.player1)}</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Player 2</div>
+                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(box1.player2)}</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Wager Amount</div>
+                    <div class="transaction-detail-value">${Number(box1.wager || 0).toFixed(3)} ETH</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Function</div>
+                    <div class="transaction-detail-value">${box1.functionName}</div>
+                </div>
+            </div>
+            <div class="transaction-detail">
+                <div class="transaction-detail-label">Description</div>
+                <div class="transaction-detail-value">${box1.description}</div>
+            </div>
+            <a href="${window.cambriaWeb3.generateTransactionLink(box1.transactionHash)}" target="_blank" class="transaction-link">
+                🔗 View Transaction on Abstract L2
+            </a>
+        `;
+        
+        transactionsList.appendChild(transactionItem);
+    }
+    
+    // Box 2: Duel Joining (joinBattle) → Status: Active
+    if (box2) {
+        const transactionItem = document.createElement('div');
+        transactionItem.className = 'transaction-item';
+        
+        transactionItem.innerHTML = `
+            <div class="transaction-header">
+                <div class="transaction-type ${box2.typeClass}">${box2.type}</div>
+                <div class="transaction-status active">Status: ${box2.status}</div>
+            </div>
+            <div class="transaction-details">
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Duel ID</div>
+                    <div class="transaction-detail-value">#${box2.duelId != null && box2.duelId !== '' ? box2.duelId : '—'}</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Player 2</div>
+                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(box2.player2)}</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Wager Amount</div>
+                    <div class="transaction-detail-value">${Number(box2.wager || 0).toFixed(3)} ETH</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Function</div>
+                    <div class="transaction-detail-value">${box2.functionName}</div>
+                </div>
+            </div>
+            <div class="transaction-detail">
+                <div class="transaction-detail-label">Description</div>
+                <div class="transaction-detail-value">${box2.description}</div>
+            </div>
+            <a href="${window.cambriaWeb3.generateTransactionLink(box2.transactionHash)}" target="_blank" class="transaction-link">
+                🔗 View Transaction on Abstract L2
+            </a>
+        `;
+        
+        transactionsList.appendChild(transactionItem);
+    }
+    
+    // Box 3: Duel Completion (claimProceeds) OR Duel Cancellation (nullifyBattle)
+    if (box3) {
+        const transactionItem = document.createElement('div');
+        transactionItem.className = 'transaction-item';
+        
+        let detailsHtml = '';
+        
+        if (box3.type === 'Duel Completion') {
+            const tw = Number(box3.totalWinnings != null ? box3.totalWinnings : 0);
+            const fee = Number(box3.fee != null ? box3.fee : 0);
+            detailsHtml = `
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Winner</div>
+                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(box3.winner)}</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Loser</div>
+                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(box3.loser)}</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Total Winnings</div>
+                    <div class="transaction-detail-value">${tw.toFixed(3)} ETH</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Platform Fee</div>
+                    <div class="transaction-detail-value">${fee.toFixed(3)} ETH</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Function</div>
+                    <div class="transaction-detail-value">${box3.functionName || 'claimProceeds'}</div>
+                </div>
+            `;
+        } else if (box3.type === 'Duel Cancellation') {
+            detailsHtml = `
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Cancelled By</div>
+                    <div class="transaction-detail-value">${window.cambriaWeb3.formatAddress(box3.player)}</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Refund Amount</div>
+                    <div class="transaction-detail-value">${Number(box3.refundAmount || 0).toFixed(3)} ETH</div>
+                </div>
+                <div class="transaction-detail">
+                    <div class="transaction-detail-label">Function</div>
+                    <div class="transaction-detail-value">${box3.functionName || 'nullifyBattle'}</div>
+                </div>
+            `;
+        }
+        
+        transactionItem.innerHTML = `
+            <div class="transaction-header">
+                <div class="transaction-type ${box3.typeClass}">${box3.type}</div>
+                <div class="transaction-status ${box3.status.toLowerCase()}">Status: ${box3.status}</div>
+            </div>
+            <div class="transaction-details">
+                ${detailsHtml}
+            </div>
+            <div class="transaction-detail">
+                <div class="transaction-detail-label">Description</div>
+                <div class="transaction-detail-value">${box3.description}</div>
+            </div>
+            <a href="${window.cambriaWeb3.generateTransactionLink(box3.transactionHash)}" target="_blank" class="transaction-link">
+                🔗 View Transaction on Abstract L2
+            </a>
+        `;
+        
+        transactionsList.appendChild(transactionItem);
+    }
+}
+
+// Handle network changes
+if (typeof window.ethereum !== 'undefined') {
+    window.ethereum.on('accountsChanged', (accounts) => {
+        if (accounts.length === 0) {
+            updateConnectionStatus(false);
+            window.cambriaWeb3.stopEventListening();
+        } else {
+            connectWallet();
+        }
+    });
+    
+    window.ethereum.on('chainChanged', (chainId) => {
+        window.location.reload();
+    });
+}
+
+// Lobby Modal Event Listeners
+function setupLobbyModalEventListeners() {
+const lobbyModal = document.getElementById('lobbyModal');
+const openLobbyModalBtn = document.getElementById('openLobbyModal');
+const closeLobbyModalBtn = document.getElementById('closeLobbyModal');
+const cancelLobbyRedirectBtn = document.getElementById('cancelLobbyRedirect');
+const confirmLobbyRedirectLink = document.getElementById('confirmLobbyRedirect');
+
+if (!openLobbyModalBtn) return;
+
+// Open modal
+openLobbyModalBtn.addEventListener('click', function() {
+if (lobbyModal) {
+lobbyModal.style.display = 'block';
+}
+});
+
+// Close modal
+if (closeLobbyModalBtn) {
+closeLobbyModalBtn.addEventListener('click', function() {
+if (lobbyModal) {
+lobbyModal.style.display = 'none';
+}
+});
+}
+
+// Cancel redirect
+if (cancelLobbyRedirectBtn) {
+cancelLobbyRedirectBtn.addEventListener('click', function() {
+if (lobbyModal) {
+lobbyModal.style.display = 'none';
+}
+});
+}
+
+// Close when clicking outside
+window.addEventListener('click', function(event) {
+if (event.target === lobbyModal) {
+lobbyModal.style.display = 'none';
+}
+});
+
+// Close on Escape key
+document.addEventListener('keydown', function(event) {
+if (event.key === 'Escape' && lobbyModal && lobbyModal.style.display === 'block') {
+lobbyModal.style.display = 'none';
+}
+});
+}
+</script>
+<script src="super-fx.js"></script>
+<script src="theme-animations.js"></script>
 </body>
 </html>
+
+

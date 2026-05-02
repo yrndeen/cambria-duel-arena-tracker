@@ -1,92 +1,35 @@
 // Cambria Duel Arena Smart Contract Configuration
-// Multi-Chain Support: Abstract L2 and Ronin
+// Abstract L2 Chain Integration
 
 const CONFIG = {
-    // Current active chain
-    ACTIVE_CHAIN: 'abstract', // 'abstract' or 'ronin'
+// Abstract L2 Chain Configuration
+CHAIN_ID: 2741,
+CHAIN_NAME: 'Abstract',
+RPC_URL: 'https://abstract.api.onfinality.io/public',
+EXPLORER_URL: 'https://abscan.org',
+// Alternative RPCs to try if primary fails:
+// - https://rpc.abs.xyz
+// - https://abstract.publicnode.com
+// - wss://rpc.abs.xyz
     
-    // Abstract L2 Chain Configuration
-    ABSTRACT: {
-        CHAIN_ID: 2741,
-        CHAIN_NAME: 'Abstract',
-        RPC_URL: 'https://api.abstract.xyz',
-        EXPLORER_URL: 'https://abscan.org',
-        CONTRACTS: {
-            DUEL_ARENA_BATTLE: '0x5f8abf7f164fbed5c51f696ddf3c2c17bcbc8fbb',
-            DUEL_ARENA_ESCROW: '0x682a307e2274c24f305d6a81682a0b5eb7612a7e'
-        }
+    // Smart Contract Addresses
+    CONTRACTS: {
+        DUEL_ARENA_BATTLE: '0x5f8abf7f164fbed5c51f696ddf3c2c17bcbc8fbb',
+        DUEL_ARENA_ESCROW: '0x682a307e2274c24f305d6a81682a0b5eb7612a7e'
     },
     
-    // Ronin Chain Configuration
-    RONIN: {
-        CHAIN_ID: 2020,
-        CHAIN_NAME: 'Ronin',
-        RPC_URL: 'https://api.roninchain.com/rpc',
-        EXPLORER_URL: 'https://app.roninchain.com',
-        CONTRACTS: {
-            DUEL_ARENA_BATTLE: '0x0000000000000000000000000000000000000000', // TODO: Get actual Ronin contract addresses
-            DUEL_ARENA_ESCROW: '0x0000000000000000000000000000000000000000'  // TODO: Get actual Ronin contract addresses
-        }
-    },
-    
-    // Get current chain config
-    getCurrentChain() {
-        return this[this.ACTIVE_CHAIN.toUpperCase()];
-    },
-    
-    // Get current contracts
-    getCurrentContracts() {
-        return this.getCurrentChain().CONTRACTS;
-    },
-    
-    // Switch active chain
-    switchChain(chain) {
-        if (chain === 'abstract' || chain === 'ronin') {
-            this.ACTIVE_CHAIN = chain;
-            this.updateTheme();
-            return true;
-        }
-        return false;
-    },
-    
-    // Update theme based on active chain
-    updateTheme() {
-        const theme = this.UI.THEMES[this.ACTIVE_CHAIN.toUpperCase()];
-        const root = document.documentElement;
-        
-        if (root && theme) {
-            root.style.setProperty('--primary', theme.PRIMARY);
-            root.style.setProperty('--primary-light', theme.PRIMARY_LIGHT);
-            root.style.setProperty('--primary-dark', theme.PRIMARY_DARK);
-            root.style.setProperty('--secondary', theme.SECONDARY);
-            root.style.setProperty('--secondary-light', theme.SECONDARY_LIGHT);
-            root.style.setProperty('--secondary-dark', theme.SECONDARY_DARK);
-            
-            // Save theme preference to localStorage
-            localStorage.setItem('cambria-active-chain', this.ACTIVE_CHAIN);
-        }
-    },
-    
-    // Load theme from localStorage
-    loadTheme() {
-        const savedChain = localStorage.getItem('cambria-active-chain');
-        if (savedChain && (savedChain === 'abstract' || savedChain === 'ronin')) {
-            this.ACTIVE_CHAIN = savedChain;
-            this.updateTheme();
-            return true;
-        }
-        return false;
-    },
-    
-    // Contract ABIs (simplified for key functions)
-    ABIS: {
-        DUEL_ARENA_BATTLE: [
-            // Events - Based on actual contract functions
-            "event DuelInitiated(uint256 indexed duelId, address indexed player1, address indexed player2, uint256 wager)",
-            "event DuelJoined(uint256 indexed duelId, address indexed player2)",
-            "event DuelCompleted(uint256 indexed duelId, address indexed winner, address indexed loser, uint256 totalWinnings, uint256 fee)",
-            "event DuelNullified(uint256 indexed duelId, address indexed player, uint256 refundAmount)",
-            "event ProceedsClaimed(uint256 indexed duelId, address indexed winner, uint256 amount, uint256 fee)",
+  // Contract ABIs (simplified for key functions)
+  ABIS: {
+    DUEL_ARENA_BATTLE: [
+      // Events - Based on actual on-chain events from AbScan
+      "event BattleInitialized(uint256 indexed battleId, address indexed playerOne, address indexed playerTwo, uint256[] assetEnum, address[] contractAddr, uint256[] amtOrTokenId)",
+      "event Deposited(uint256 indexed battleId, address indexed payee, uint256[] assetEnum, address[] contractAddr, uint256[] amtOrTokenId)",
+      // Legacy event names (for compatibility)
+      "event DuelInitiated(uint256 indexed duelId, address indexed player1, address indexed player2, uint256 wager)",
+      "event DuelJoined(uint256 indexed duelId, address indexed player2)",
+      "event DuelCompleted(uint256 indexed duelId, address indexed winner, address indexed loser, uint256 totalWinnings, uint256 fee)",
+      "event DuelNullified(uint256 indexed duelId, address indexed player, uint256 refundAmount)",
+      "event ProceedsClaimed(uint256 indexed duelId, address indexed winner, uint256 amount, uint256 fee)",
             
             // Functions - Based on actual contract
             "function initBattle(address opponent, uint256 wager) external payable", // 10. Player1 hosts
@@ -135,37 +78,38 @@ const CONFIG = {
         REFRESH_INTERVAL: 30000, // 30 seconds
         MAX_DUELS_DISPLAY: 50,
         CHART_UPDATE_INTERVAL: 60000, // 1 minute
-        
-        // Theme Configuration
-        THEMES: {
-            ABSTRACT: {
-                PRIMARY: '#6a3d9a',
-                PRIMARY_LIGHT: '#8b5fb8',
-                PRIMARY_DARK: '#4a2c6b',
-                SECONDARY: '#00b4d8',
-                SECONDARY_LIGHT: '#33c4e0',
-                SECONDARY_DARK: '#0099b8'
-            },
-            RONIN: {
-                PRIMARY: '#1e40af',
-                PRIMARY_LIGHT: '#3b82f6',
-                PRIMARY_DARK: '#1e3a8a',
-                SECONDARY: '#0ea5e9',
-                SECONDARY_LIGHT: '#38bdf8',
-                SECONDARY_DARK: '#0284c7'
-            }
-        }
+        /** When true, live feed API includes settled duels (ProceedsClaimed) so history is visible. */
+        LIVE_FEED_INCLUDE_CLAIMED: true,
+        /** Duels per page on the home live feed (API + UI). */
+        LIVE_FEED_PAGE_SIZE: 100
+    },
+
+    // SQLite indexer (server + npm run index)
+    INDEXER: {
+        /** Default DB path; override with env CAMBRIA_DB_PATH */
+        DB_PATH: typeof process !== 'undefined' && process.env && process.env.CAMBRIA_DB_PATH
+            ? process.env.CAMBRIA_DB_PATH
+            : null,
+        /** Blocks per RPC queryFilter batch */
+        CHUNK_SIZE: 8000,
+        /** Background sync interval when running server (ms) */
+        POLL_MS: 45000,
+        /** First run: scan this many blocks back from chain tip if no checkpoint */
+        INITIAL_LOOKBACK: 600000,
+        /** Optional fixed start block (set in env CAMBRIA_INDEXER_FROM_BLOCK as integer) */
+        START_BLOCK: typeof process !== 'undefined' && process.env && process.env.CAMBRIA_INDEXER_FROM_BLOCK
+            ? parseInt(process.env.CAMBRIA_INDEXER_FROM_BLOCK, 10)
+            : null
     },
     
-    // Error Messages
-    ERRORS: {
-        NETWORK_ERROR: 'Network connection error. Please check your internet connection.',
-        CONTRACT_ERROR: 'Smart contract interaction failed. Please try again.',
-        WALLET_NOT_FOUND: 'Wallet address not found in duel history.',
-        INVALID_ADDRESS: 'Invalid wallet address format.',
-        CHAIN_NOT_SUPPORTED: 'Please switch to a supported network (Abstract L2 or Ronin).',
-        CONTRACT_NOT_DEPLOYED: 'Duel Arena contracts not yet deployed on this chain.'
-    }
+// Error Messages
+ERRORS: {
+NETWORK_ERROR: 'Connection issue. Some features may be limited.',
+CONTRACT_ERROR: 'Smart contract interaction failed. Please try again.',
+WALLET_NOT_FOUND: 'Wallet address not found in duel history.',
+INVALID_ADDRESS: 'Invalid wallet address format.',
+CHAIN_NOT_SUPPORTED: 'Please switch to Abstract L2 network.'
+}
 };
 
 // Export for use in other files
