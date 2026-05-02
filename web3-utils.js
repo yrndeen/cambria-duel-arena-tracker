@@ -545,9 +545,17 @@ return false;
                         method: 'GET',
                         headers: { 'Content-Type': 'application/json' }
                     });
-                    if (response.ok) {
-                        return await response.json();
-                    }
+        if (response.ok) {
+          const result = await response.json();
+          
+          // The API returns {stats, events, address}, extract just stats
+          const stats = result.stats || result;
+
+          // Cache the result
+          this.setCachedData('walletStats', walletAddress, stats);
+
+          return stats;
+        }
                 } catch (apiErr) {
                     console.log('Statistics API error:', apiErr);
                 }
