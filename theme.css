@@ -166,7 +166,7 @@ input.search-input:-webkit-autofill:active {
   border: 1px solid rgba(255, 122, 60, 0.4);
 }
 
-.live-feed-table tr:hover,
+/* Removed hover effect on live-feed-table to prevent animation when clicking */
 .leaderboard-table tr:hover,
 .duels-table tr:hover {
   background-color: rgba(255, 90, 31, 0.12);

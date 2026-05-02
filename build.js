@@ -115,24 +115,70 @@ try {
   console.log('⚠️ Could not export data:', error.message);
 }
 
-// Copy api-data to functions directory for Netlify Functions access
+// Generate wallet function with embedded data for Netlify Functions
 try {
-  const functionsApiDir = path.join('netlify', 'functions', 'api-data');
-  if (!fs.existsSync(functionsApiDir)) {
-    fs.mkdirSync(functionsApiDir, { recursive: true });
-  }
+  const eventsData = fs.readFileSync(path.join(distDir, 'api-data', 'events.json'), 'utf8');
+  const walletFunction = `// Auto-generated file - DO NOT EDIT
+// Generated: ${new Date().toISOString()}
+const eventsData = ${eventsData};
+
+exports.handler = async (event, context) => {
+  const pathParts = event.path.split('/').filter(p => p);
+  const walletAddress = pathParts[pathParts.length - 1]?.toLowerCase();
   
-  fs.copyFileSync(
-    path.join(distDir, 'api-data', 'events.json'),
-    path.join(functionsApiDir, 'events.json')
-  );
-  fs.copyFileSync(
-    path.join(distDir, 'api-data', 'summary.json'),
-    path.join(functionsApiDir, 'summary.json')
-  );
-  console.log('✅ Copied api-data to functions directory');
+  if (!walletAddress || walletAddress === 'wallet-address') {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Missing wallet address' }) };
+  }
+
+  try {
+    const allEvents = eventsData;
+    const walletEvents = allEvents.filter(event => {
+      try {
+        const payload = JSON.parse(event.payload);
+        const addr = walletAddress.toLowerCase();
+        return (
+          payload.player1?.toLowerCase() === addr ||
+          payload.player2?.toLowerCase() === addr ||
+          payload.winner?.toLowerCase() === addr ||
+          payload.loser?.toLowerCase() === addr ||
+          payload.payee?.toLowerCase() === addr
+        );
+      } catch { return false; }
+    });
+
+    const stats = { totalDuels: 0, wins: 0, losses: 0, totalWagered: 0, totalProfit: 0, winRate: 0 };
+    const duelInitiated = walletEvents.filter(e => e.event_type === 'DuelInitiated' || e.event_type === 'BattleInitialized');
+    const duelCompleted = walletEvents.filter(e => e.event_type === 'DuelCompleted' || e.event_type === 'ProceedsClaimed');
+    stats.totalDuels = duelInitiated.length;
+
+    duelCompleted.forEach(event => {
+      const payload = JSON.parse(event.payload);
+      if (payload.winner?.toLowerCase() === walletAddress) { stats.wins++; stats.totalProfit += parseFloat(payload.totalWinnings || 0); }
+      else if (payload.loser?.toLowerCase() === walletAddress) { stats.losses++; }
+    });
+
+    duelInitiated.forEach(event => {
+      const payload = JSON.parse(event.payload);
+      if (payload.wager) stats.totalWagered += parseFloat(payload.wager);
+    });
+
+    stats.winRate = stats.totalDuels > 0 ? (stats.wins / stats.totalDuels * 100).toFixed(2) : 0;
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ stats, events: walletEvents.slice(0, 100), totalCount: walletEvents.length, address: walletAddress }),
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    };
+  } catch (error) {
+    return { statusCode: 500, body: JSON.stringify({ error: error.message, stack: error.stack }) };
+  }
+};
+`;
+  
+  fs.writeFileSync(path.join('netlify', 'functions', 'wallet-address.js'), walletFunction);
+  console.log('✅ Generated wallet function with embedded data');
 } catch (error) {
-  console.log('⚠️ Could not copy api-data to functions:', error.message);
+  console.log('⚠️ Could not generate wallet function:', error.message);
 }
 
 // Also create api folder alias for web3-utils.js compatibility
