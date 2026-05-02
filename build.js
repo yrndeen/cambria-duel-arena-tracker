@@ -135,5 +135,23 @@ try {
   console.log('⚠️ Could not copy api-data to functions:', error.message);
 }
 
+// Also create api folder alias for web3-utils.js compatibility
+try {
+  const apiDir = path.join(distDir, 'api');
+  if (!fs.existsSync(apiDir)) {
+    fs.mkdirSync(apiDir, { recursive: true });
+  }
+  
+  // Create live-feed.json as an alias to events.json
+  const eventsData = JSON.parse(fs.readFileSync(path.join(distDir, 'api-data', 'events.json'), 'utf8'));
+  fs.writeFileSync(
+    path.join(apiDir, 'live-feed.json'),
+    JSON.stringify({ events: eventsData }, null, 2)
+  );
+  console.log('✅ Created api/live-feed.json alias');
+} catch (error) {
+  console.log('⚠️ Could not create api alias:', error.message);
+}
+
 console.log('🎉 Build complete! Files are ready for deployment.');
 console.log('📁 Built files are in the ./dist directory');
